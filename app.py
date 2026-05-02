@@ -90,3 +90,10 @@ Utilise parfois des emojis pour être plus engageant. Sois chaleureux et profess
 if __name__ == '__main__':
     print("🚀 MODAI V2 démarré sur http://localhost:5000")
     app.run(debug=True, port=5000)
+    
+@app.route('/')
+def index():
+    return send_from_directory('.', 'index.html')
+@app.route('/landing')
+def landing():
+    return send_from_directory('.', 'landing.html')
