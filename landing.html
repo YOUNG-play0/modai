@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MODAI — L'IA qui écrit pour votre boutique mode</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --gold: #C9A84C;
+  --gold-light: #E8C97A;
+  --gold-pale: rgba(201,168,76,0.12);
+  --black: #080808;
+  --dark: #0F0F0F;
+  --card: #141414;
+  --border: #222;
+  --text: #E8E2D9;
+  --muted: #6A6058;
+  --white: #F5F0E8;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--black);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  overflow-x: hidden;
+  cursor: none;
+}
+
+/* CUSTOM CURSOR */
+.cursor {
+  width: 8px; height: 8px;
+  background: var(--gold);
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  transition: transform 0.15s ease;
+  mix-blend-mode: difference;
+}
+.cursor-ring {
+  width: 32px; height: 32px;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  z-index: 9998;
+  transition: all 0.3s ease;
+  opacity: 0.5;
+}
+
+/* NOISE TEXTURE */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+
+/* NAV */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 28px 60px;
+  z-index: 100;
+  border-bottom: 1px solid transparent;
+  transition: all 0.4s;
+}
+
+nav.scrolled {
+  background: rgba(8,8,8,0.92);
+  border-bottom-color: var(--border);
+  backdrop-filter: blur(20px);
+  padding: 20px 60px;
+}
+
+.nav-logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 26px;
+  font-weight: 300;
+  letter-spacing: 8px;
+  color: var(--gold);
+  text-decoration: none;
+}
+
+.nav-logo span { color: var(--text); font-weight: 600; }
+
+.nav-links {
+  display: flex;
+  gap: 40px;
+  list-style: none;
+}
+
+.nav-links a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+
+.nav-links a:hover { color: var(--gold); }
+
+.nav-cta {
+  background: var(--gold);
+  color: var(--black) !important;
+  padding: 10px 24px;
+  font-size: 10px !important;
+  letter-spacing: 2px !important;
+  transition: background 0.2s !important;
+}
+
+.nav-cta:hover { background: var(--gold-light) !important; color: var(--black) !important; }
+
+/* HERO */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 120px 60px 80px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  background: 
+    radial-gradient(ellipse 60% 50% at 50% 60%, rgba(201,168,76,0.06) 0%, transparent 70%),
+    radial-gradient(ellipse 30% 30% at 20% 20%, rgba(201,168,76,0.03) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.hero-label {
+  font-size: 10px;
+  letter-spacing: 5px;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: 32px;
+  opacity: 0;
+  animation: fadeUp 0.8s ease 0.2s forwards;
+}
+
+.hero-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(52px, 8vw, 96px);
+  font-weight: 300;
+  line-height: 1.05;
+  letter-spacing: -1px;
+  margin-bottom: 32px;
+  opacity: 0;
+  animation: fadeUp 0.8s ease 0.4s forwards;
+}
+
+.hero-title em {
+  font-style: italic;
+  color: var(--gold);
+}
+
+.hero-title .line2 {
+  display: block;
+  font-weight: 600;
+}
+
+.hero-sub {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.8;
+  max-width: 480px;
+  margin: 0 auto 48px;
+  opacity: 0;
+  animation: fadeUp 0.8s ease 0.6s forwards;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  opacity: 0;
+  animation: fadeUp 0.8s ease 0.8s forwards;
+}
+
+.btn-primary {
+  background: var(--gold);
+  color: var(--black);
+  border: none;
+  padding: 16px 40px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  cursor: none;
+  text-decoration: none;
+  transition: all 0.2s;
+  display: inline-block;
+}
+
+.btn-primary:hover { background: var(--gold-light); transform: translateY(-2px); }
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 16px 40px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  cursor: none;
+  text-decoration: none;
+  transition: all 0.2s;
+  display: inline-block;
+}
+
+.btn-secondary:hover { border-color: var(--gold); color: var(--gold); }
+
+/* SCROLL INDICATOR */
+.scroll-indicator {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  animation: fadeUp 0.8s ease 1.2s forwards;
+}
+
+.scroll-line {
+  width: 1px;
+  height: 48px;
+  background: linear-gradient(to bottom, var(--gold), transparent);
+  animation: scrollLine 1.5s ease infinite;
+}
+
+@keyframes scrollLine {
+  0% { transform: scaleY(0); transform-origin: top; }
+  50% { transform: scaleY(1); transform-origin: top; }
+  51% { transform: scaleY(1); transform-origin: bottom; }
+  100% { transform: scaleY(0); transform-origin: bottom; }
+}
+
+.scroll-text {
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+/* STATS BAR */
+.stats-bar {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: var(--dark);
+}
+
+.stat-item {
+  padding: 40px;
+  text-align: center;
+  border-right: 1px solid var(--border);
+  transition: background 0.3s;
+}
+
+.stat-item:last-child { border-right: none; }
+.stat-item:hover { background: var(--gold-pale); }
+
+.stat-number {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 48px;
+  font-weight: 300;
+  color: var(--gold);
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.stat-label {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+/* SECTION */
+section {
+  padding: 120px 60px;
+  position: relative;
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 80px;
+}
+
+.section-tag {
+  font-size: 10px;
+  letter-spacing: 5px;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  display: block;
+}
+
+.section-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(36px, 5vw, 56px);
+  font-weight: 300;
+  line-height: 1.1;
+}
+
+.section-title em { font-style: italic; color: var(--gold); }
+
+/* HOW IT WORKS */
+.how-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.how-card {
+  background: var(--card);
+  padding: 48px 40px;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.3s;
+}
+
+.how-card:hover { background: #1A1A1A; }
+
+.how-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--gold);
+  transform: scaleX(0);
+  transition: transform 0.4s ease;
+}
+
+.how-card:hover::before { transform: scaleX(1); }
+
+.how-number {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 80px;
+  font-weight: 300;
+  color: rgba(201,168,76,0.1);
+  line-height: 1;
+  margin-bottom: 24px;
+  transition: color 0.3s;
+}
+
+.how-card:hover .how-number { color: rgba(201,168,76,0.2); }
+
+.how-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 400;
+  margin-bottom: 12px;
+  color: var(--white);
+}
+
+.how-desc {
+  color: var(--muted);
+  line-height: 1.7;
+  font-size: 12px;
+}
+
+/* FEATURES */
+.features-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.features-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.feature-item {
+  padding: 28px 0;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  cursor: none;
+  transition: all 0.2s;
+}
+
+.feature-item:first-child { border-top: 1px solid var(--border); }
+
+.feature-item:hover { padding-left: 12px; }
+
+.feature-icon {
+  color: var(--gold);
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.feature-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px;
+  font-weight: 400;
+  margin-bottom: 6px;
+  color: var(--white);
+}
+
+.feature-desc {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.features-demo {
+  background: var(--card);
+  border: 1px solid var(--border);
+  padding: 40px;
+  position: relative;
+}
+
+.demo-label {
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+
+.demo-input-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.demo-field {
+  background: var(--dark);
+  border: 1px solid var(--border);
+  padding: 10px 14px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--text);
+}
+
+.demo-btn {
+  width: 100%;
+  background: var(--gold);
+  border: none;
+  padding: 12px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--black);
+  cursor: none;
+  margin-bottom: 24px;
+}
+
+.demo-output {
+  background: var(--dark);
+  border: 1px solid var(--border);
+  padding: 16px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text);
+  min-height: 120px;
+}
+
+.demo-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 14px;
+  background: var(--gold);
+  animation: blink 1s infinite;
+  vertical-align: middle;
+}
+
+@keyframes blink { 0%,50% { opacity: 1; } 51%,100% { opacity: 0; } }
+
+/* PLATFORMS */
+.platforms-section {
+  background: var(--dark);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.platforms-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.platform-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  padding: 32px;
+  text-align: center;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.platform-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--gold-pale);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.platform-card:hover { border-color: var(--gold); transform: translateY(-4px); }
+.platform-card:hover::after { opacity: 1; }
+
+.platform-emoji { font-size: 32px; margin-bottom: 12px; }
+
+.platform-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 400;
+  margin-bottom: 8px;
+  color: var(--white);
+}
+
+.platform-desc {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+/* TESTIMONIALS */
+.testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.testimonial-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  padding: 40px;
+  position: relative;
+  transition: border-color 0.3s;
+}
+
+.testimonial-card:hover { border-color: var(--gold); }
+
+.testimonial-quote {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 64px;
+  color: var(--gold);
+  opacity: 0.3;
+  line-height: 0.5;
+  margin-bottom: 20px;
+}
+
+.testimonial-text {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px;
+  font-style: italic;
+  line-height: 1.6;
+  color: var(--white);
+  margin-bottom: 24px;
+}
+
+.testimonial-author {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.testimonial-stars {
+  color: var(--gold);
+  font-size: 12px;
+  margin-bottom: 16px;
+  letter-spacing: 2px;
+}
+
+/* PRICING */
+.pricing-section { background: var(--dark); border-top: 1px solid var(--border); }
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.pricing-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  padding: 48px;
+  position: relative;
+  transition: all 0.3s;
+}
+
+.pricing-card.featured {
+  border-color: var(--gold);
+}
+
+.pricing-card.featured::before {
+  content: 'POPULAIRE';
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--gold);
+  color: var(--black);
+  font-size: 9px;
+  letter-spacing: 3px;
+  padding: 5px 20px;
+}
+
+.pricing-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 14px;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+
+.pricing-price {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 64px;
+  font-weight: 300;
+  color: var(--gold);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.pricing-price span { font-size: 20px; }
+
+.pricing-period {
+  color: var(--muted);
+  font-size: 11px;
+  margin-bottom: 36px;
+}
+
+.pricing-features {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 40px;
+}
+
+.pricing-features li {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.pricing-features li::before {
+  content: '✦';
+  color: var(--gold);
+  font-size: 10px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.pricing-features li.disabled {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.pricing-features li.disabled::before { opacity: 0.3; }
+
+/* CTA SECTION */
+.cta-section {
+  text-align: center;
+  padding: 160px 60px;
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 70% 60% at 50% 50%, rgba(201,168,76,0.07) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.cta-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(44px, 6vw, 80px);
+  font-weight: 300;
+  line-height: 1.1;
+  margin-bottom: 24px;
+}
+
+.cta-title em { font-style: italic; color: var(--gold); }
+
+.cta-sub {
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 48px;
+  letter-spacing: 1px;
+}
+
+/* FOOTER */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 48px 60px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--dark);
+}
+
+.footer-logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 300;
+  letter-spacing: 6px;
+  color: var(--gold);
+}
+
+.footer-logo span { color: var(--text); font-weight: 600; }
+
+.footer-copy {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+/* ANIMATIONS */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* DIVIDER */
+.gold-divider {
+  width: 48px;
+  height: 1px;
+  background: var(--gold);
+  margin: 24px auto;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  nav { padding: 20px; }
+  nav.scrolled { padding: 16px 20px; }
+  .nav-links { display: none; }
+  section { padding: 80px 24px; }
+  .hero { padding: 100px 24px 60px; }
+  .stats-bar { grid-template-columns: repeat(2, 1fr); }
+  .how-grid { grid-template-columns: 1fr; }
+  .features-layout { grid-template-columns: 1fr; }
+  .platforms-grid { grid-template-columns: repeat(2, 1fr); }
+  .testimonials-grid { grid-template-columns: 1fr; }
+  .pricing-grid { grid-template-columns: 1fr; }
+  .cta-section { padding: 100px 24px; }
+  footer { flex-direction: column; gap: 16px; text-align: center; padding: 40px 24px; }
+  body { cursor: auto; }
+  .cursor, .cursor-ring { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- CURSOR -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav id="navbar">
+  <a href="#" class="nav-logo">MOD<span>AI</span></a>
+  <ul class="nav-links">
+    <li><a href="#comment">Comment ça marche</a></li>
+    <li><a href="#fonctionnalites">Fonctionnalités</a></li>
+    <li><a href="#tarifs">Tarifs</a></li>
+    <li><a href="https://modai-eisp.onrender.com" class="nav-cta">Essayer gratuitement</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <p class="hero-label">✦ L'intelligence artificielle au service de la mode</p>
+  <h1 class="hero-title">
+    Votre contenu mode,<br>
+    <em>écrit en 10 secondes</em>
+    <span class="line2">par l'IA.</span>
+  </h1>
+  <p class="hero-sub">MODAI génère automatiquement vos descriptions produits, posts Instagram, captions TikTok et emails marketing — en un seul clic.</p>
+  <div class="hero-actions">
+    <a href="https://modai-eisp.onrender.com" class="btn-primary">Commencer gratuitement</a>
+    <a href="#comment" class="btn-secondary">Voir comment ça marche</a>
+  </div>
+  <div class="scroll-indicator">
+    <div class="scroll-line"></div>
+    <span class="scroll-text">Défiler</span>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stat-item reveal">
+    <div class="stat-number">10s</div>
+    <div class="stat-label">Par génération</div>
+  </div>
+  <div class="stat-item reveal">
+    <div class="stat-number">6</div>
+    <div class="stat-label">Plateformes couvertes</div>
+  </div>
+  <div class="stat-item reveal">
+    <div class="stat-number">+57%</div>
+    <div class="stat-label">Taux de conversion</div>
+  </div>
+  <div class="stat-item reveal">
+    <div class="stat-number">0€</div>
+    <div class="stat-label">Pour commencer</div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section id="comment">
+  <div class="section-header reveal">
+    <span class="section-tag">Processus</span>
+    <h2 class="section-title">Simple comme <em>1, 2, 3</em></h2>
+    <div class="gold-divider"></div>
+  </div>
+  <div class="how-grid reveal">
+    <div class="how-card">
+      <div class="how-number">01</div>
+      <h3 class="how-title">Décrivez votre produit</h3>
+      <p class="how-desc">Entrez le nom, la couleur, la matière et le prix de votre article. Trois champs, pas plus.</p>
+    </div>
+    <div class="how-card">
+      <div class="how-number">02</div>
+      <h3 class="how-title">Choisissez vos plateformes</h3>
+      <p class="how-desc">Instagram, TikTok, Facebook, email marketing — sélectionnez tout ce dont vous avez besoin en un clic.</p>
+    </div>
+    <div class="how-card">
+      <div class="how-number">03</div>
+      <h3 class="how-title">Copiez et publiez</h3>
+      <p class="how-desc">Votre contenu est prêt en 10 secondes. Copiez-collez directement ou téléchargez tout en .txt.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="fonctionnalites" style="background:var(--dark);border-top:1px solid var(--border)">
+  <div class="section-header reveal">
+    <span class="section-tag">Fonctionnalités</span>
+    <h2 class="section-title">Tout ce dont votre boutique <em>a besoin</em></h2>
+    <div class="gold-divider"></div>
+  </div>
+  <div class="features-layout">
+    <div class="features-list reveal">
+      <div class="feature-item">
+        <div class="feature-icon">✦</div>
+        <div>
+          <p class="feature-name">Descriptions SEO optimisées</p>
+          <p class="feature-desc">Du contenu pensé pour convertir et remonter dans les résultats de recherche.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">✦</div>
+        <div>
+          <p class="feature-name">Posts multi-plateformes</p>
+          <p class="feature-desc">Instagram, TikTok, Facebook — chaque contenu adapté au format et au ton de chaque réseau.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">✦</div>
+        <div>
+          <p class="feature-name">Assistant IA mode</p>
+          <p class="feature-desc">Un chatbot spécialisé pour répondre à vos questions marketing et vous conseiller sur les tendances.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">✦</div>
+        <div>
+          <p class="feature-name">Historique des générations</p>
+          <p class="feature-desc">Retrouvez et réutilisez vos 10 dernières générations en un clic.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">✦</div>
+        <div>
+          <p class="feature-name">Ton de marque personnalisable</p>
+          <p class="feature-desc">Luxe, casual, streetwear, éco-responsable — MODAI s'adapte à votre identité.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="features-demo reveal">
+      <p class="demo-label">Aperçu en direct</p>
+      <div class="demo-input-row">
+        <input class="demo-field" id="demoNom" placeholder="Nom du produit..." value="Robe bohème été">
+        <input class="demo-field" id="demoPrix" placeholder="Prix..." value="39€">
+      </div>
+      <button class="demo-btn" onclick="demoGenerate()">✦ &nbsp; Générer</button>
+      <div class="demo-output" id="demoOutput">
+        <span style="color:var(--muted);font-size:11px;letter-spacing:1px">Cliquez sur Générer pour voir la magie...</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PLATFORMS -->
+<section>
+  <div class="section-header reveal">
+    <span class="section-tag">Plateformes</span>
+    <h2 class="section-title">Partout où vos <em>clients vous cherchent</em></h2>
+    <div class="gold-divider"></div>
+  </div>
+  <div class="platforms-grid reveal">
+    <div class="platform-card">
+      <div class="platform-emoji">📸</div>
+      <p class="platform-name">Instagram</p>
+      <p class="platform-desc">Posts engageants avec emojis et hashtags optimisés</p>
+    </div>
+    <div class="platform-card">
+      <div class="platform-emoji">🎵</div>
+      <p class="platform-name">TikTok</p>
+      <p class="platform-desc">Captions virales adaptées aux tendances du moment</p>
+    </div>
+    <div class="platform-card">
+      <div class="platform-emoji">👥</div>
+      <p class="platform-name">Facebook</p>
+      <p class="platform-desc">Posts détaillés pour convertir votre communauté</p>
+    </div>
+    <div class="platform-card">
+      <div class="platform-emoji">📧</div>
+      <p class="platform-name">Email</p>
+      <p class="platform-desc">Campagnes email percutantes pour vos abonnés</p>
+    </div>
+    <div class="platform-card">
+      <div class="platform-emoji">🏪</div>
+      <p class="platform-name">Fiche produit</p>
+      <p class="platform-desc">Descriptions SEO qui transforment les visiteurs en acheteurs</p>
+    </div>
+    <div class="platform-card">
+      <div class="platform-emoji">#️⃣</div>
+      <p class="platform-name">Hashtags</p>
+      <p class="platform-desc">20 hashtags optimisés mix populaires et niche</p>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section style="background:var(--dark);border-top:1px solid var(--border)">
+  <div class="section-header reveal">
+    <span class="section-tag">Témoignages</span>
+    <h2 class="section-title">Ce que disent nos <em>clientes</em></h2>
+    <div class="gold-divider"></div>
+  </div>
+  <div class="testimonials-grid reveal">
+    <div class="testimonial-card">
+      <div class="testimonial-quote">"</div>
+      <div class="testimonial-stars">★★★★★</div>
+      <p class="testimonial-text">Je passais 2h par jour à écrire mes descriptions. Maintenant ça me prend 10 minutes. MODAI a changé ma façon de gérer ma boutique.</p>
+      <p class="testimonial-author">Sarah M. — Boutique Élégance Paris</p>
+    </div>
+    <div class="testimonial-card">
+      <div class="testimonial-quote">"</div>
+      <div class="testimonial-stars">★★★★★</div>
+      <p class="testimonial-text">Mes posts Instagram ont doublé en engagement depuis que j'utilise MODAI. Le contenu est vraiment adapté à ma marque.</p>
+      <p class="testimonial-author">Amina K. — Shop Afrique Moderne</p>
+    </div>
+    <div class="testimonial-card">
+      <div class="testimonial-quote">"</div>
+      <div class="testimonial-stars">★★★★★</div>
+      <p class="testimonial-text">Simple, rapide, efficace. Je recommande à toutes les boutiques qui veulent gagner du temps sur leur marketing.</p>
+      <p class="testimonial-author">Léa D. — Créatrice indépendante</p>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="tarifs" class="pricing-section">
+  <div class="section-header reveal">
+    <span class="section-tag">Tarifs</span>
+    <h2 class="section-title">Transparent. <em>Sans surprise.</em></h2>
+    <div class="gold-divider"></div>
+  </div>
+  <div class="pricing-grid reveal">
+    <div class="pricing-card">
+      <p class="pricing-name">Gratuit</p>
+      <div class="pricing-price">0 <span>€</span></div>
+      <p class="pricing-period">Pour toujours</p>
+      <ul class="pricing-features">
+        <li>5 générations par jour</li>
+        <li>Description produit + Instagram</li>
+        <li>Assistant IA mode</li>
+        <li>Historique 10 générations</li>
+        <li>Téléchargement .txt</li>
+        <li class="disabled">Plateformes illimitées</li>
+        <li class="disabled">Générations illimitées</li>
+      </ul>
+      <a href="https://modai-eisp.onrender.com" class="btn-secondary" style="display:block;text-align:center">Commencer gratuitement</a>
+    </div>
+    <div class="pricing-card featured">
+      <p class="pricing-name">Pro</p>
+      <div class="pricing-price">19 <span>€</span></div>
+      <p class="pricing-period">par mois — sans engagement</p>
+      <ul class="pricing-features">
+        <li>Générations illimitées</li>
+        <li>Toutes les plateformes</li>
+        <li>Assistant IA prioritaire</li>
+        <li>Historique illimité</li>
+        <li>Téléchargement .txt</li>
+        <li>Support prioritaire</li>
+        <li>Nouvelles fonctionnalités en avant-première</li>
+      </ul>
+      <a href="https://modai-eisp.onrender.com" class="btn-primary" style="display:block;text-align:center">Passer Pro</a>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <p class="section-tag reveal">Prêt à commencer ?</p>
+  <h2 class="cta-title reveal">Votre première génération<br><em>en moins d'une minute.</em></h2>
+  <p class="cta-sub reveal">Gratuit. Sans carte bancaire. Sans engagement.</p>
+  <div class="reveal">
+    <a href="https://modai-eisp.onrender.com" class="btn-primary" style="font-size:13px;padding:20px 56px">Essayer MODAI gratuitement ✦</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">MOD<span>AI</span></div>
+  <p class="footer-copy">© 2025 MODAI — L'IA au service de la mode</p>
+</footer>
+
+<script>
+// CURSOR
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursorRing');
+let mx = 0, my = 0, rx = 0, ry = 0;
+
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cursor.style.left = mx - 4 + 'px';
+  cursor.style.top = my - 4 + 'px';
+});
+
+function animateRing() {
+  rx += (mx - rx - 16) * 0.12;
+  ry += (my - ry - 16) * 0.12;
+  ring.style.left = rx + 'px';
+  ring.style.top = ry + 'px';
+  requestAnimationFrame(animateRing);
+}
+animateRing();
+
+document.querySelectorAll('a, button').forEach(el => {
+  el.addEventListener('mouseenter', () => {
+    cursor.style.transform = 'scale(2.5)';
+    ring.style.transform = 'scale(1.5)';
+    ring.style.opacity = '0.8';
+  });
+  el.addEventListener('mouseleave', () => {
+    cursor.style.transform = 'scale(1)';
+    ring.style.transform = 'scale(1)';
+    ring.style.opacity = '0.5';
+  });
+});
+
+// NAV SCROLL
+window.addEventListener('scroll', () => {
+  document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 60);
+});
+
+// REVEAL ON SCROLL
+const observer = new IntersectionObserver(entries => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.classList.add('visible'), i * 80);
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// DEMO GENERATOR
+const demoTexts = [
+  "✨ Robe bohème été — 39€\n\nLaissez-vous envoûter par cette robe bohème aux douces nuances estivales. Confectionnée avec soin, elle épouse vos courbes avec légèreté et fluidité.\n\n📦 Livraison offerte dès 50€\n💛 Disponible en plusieurs tailles\n\n#robeété #modebohème #boutiquefemme #lookdujourk #fashionstyle",
+  "🌸 La robe de l'été est arrivée !\n\nRobe bohème fluide à 39€ seulement — pour toutes vos occasions estivales. Confortable, légère, et tellement élégante ✨\n\nCommandée avant 18h = livraison demain ! 🚀\n\n#été2025 #robe #mode #shopping #lookoftheday",
+  "Robe Bohème Été — Description Produit\n\nCette robe bohème incarne l'essence même de l'élégance décontractée. Son design fluide et ses finitions soignées en font la pièce incontournable de votre garde-robe estivale.\n\n✓ Matière douce et respirante\n✓ Coupe flatteuse toutes morphologies\n✓ Prix : 39€\n\nIdéale pour vos sorties, vacances et occasions spéciales."
+];
+
+let demoIndex = 0;
+let demoTyping = null;
+
+function demoGenerate() {
+  const output = document.getElementById('demoOutput');
+  const text = demoTexts[demoIndex % demoTexts.length];
+  demoIndex++;
+
+  if (demoTyping) clearInterval(demoTyping);
+  output.innerHTML = '';
+  let i = 0;
+
+  demoTyping = setInterval(() => {
+    if (i < text.length) {
+      output.innerHTML = text.substring(0, i + 1).replace(/\n/g, '<br>') + '<span class="demo-cursor"></span>';
+      i++;
+    } else {
+      output.innerHTML = text.replace(/\n/g, '<br>');
+      clearInterval(demoTyping);
+    }
+  }, 18);
+}
+</script>
+</body>
+</html>
