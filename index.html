@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MODAI — Contenu Mode par IA</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #E8C97A;
+    --black: #0A0A0A;
+    --dark: #111111;
+    --card: #161616;
+    --border: #2A2A2A;
+    --text: #E8E2D9;
+    --muted: #7A7068;
+    --white: #F5F0E8;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--black);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 40px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: rgba(10,10,10,0.95);
+    backdrop-filter: blur(10px);
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 300;
+    letter-spacing: 6px;
+    color: var(--gold);
+  }
+
+  .logo span { color: var(--text); font-weight: 600; }
+
+  .plan-badge {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 6px 14px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .plan-badge .counter {
+    color: var(--gold);
+    font-weight: 400;
+  }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    padding: 0 40px;
+    background: var(--dark);
+  }
+
+  .tab {
+    padding: 16px 24px;
+    cursor: pointer;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+
+  .tab.active {
+    color: var(--gold);
+    border-bottom-color: var(--gold);
+  }
+
+  .tab:hover:not(.active) { color: var(--text); }
+
+  /* PAGES */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* GENERATOR PAGE */
+  .generator-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: calc(100vh - 120px);
+  }
+
+  .input-panel {
+    padding: 40px;
+    border-right: 1px solid var(--border);
+  }
+
+  .output-panel {
+    padding: 40px;
+    background: var(--dark);
+  }
+
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+
+  .field-group { margin-bottom: 20px; }
+
+  label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  input, textarea, select {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--gold);
+  }
+
+  textarea { resize: vertical; min-height: 80px; }
+
+  select option { background: var(--card); }
+
+  /* PLATFORM CHECKBOXES */
+  .platforms {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .platform-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .platform-check:hover { border-color: var(--gold); }
+  .platform-check.selected { border-color: var(--gold); background: rgba(201,168,76,0.1); }
+
+  .platform-check input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    accent-color: var(--gold);
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .platform-check span {
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--text);
+  }
+
+  /* GENERATE BUTTON */
+  .btn-generate {
+    width: 100%;
+    background: var(--gold);
+    color: var(--black);
+    border: none;
+    padding: 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-generate:hover { background: var(--gold-light); }
+
+  .btn-generate:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* OUTPUT TABS */
+  .output-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 24px;
+    border: 1px solid var(--border);
+  }
+
+  .output-tab {
+    flex: 1;
+    padding: 10px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-align: center;
+    cursor: pointer;
+    color: var(--muted);
+    background: var(--card);
+    border-right: 1px solid var(--border);
+    transition: all 0.2s;
+  }
+
+  .output-tab:last-child { border-right: none; }
+  .output-tab.active { background: var(--gold); color: var(--black); }
+
+  .output-content {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 20px;
+    min-height: 200px;
+    line-height: 1.7;
+    font-size: 13px;
+    white-space: pre-wrap;
+    position: relative;
+  }
+
+  .output-content.empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 2px;
+  }
+
+  .copy-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: var(--border);
+    border: none;
+    color: var(--muted);
+    padding: 6px 12px;
+    font-size: 10px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    transition: all 0.2s;
+  }
+
+  .copy-btn:hover { background: var(--gold); color: var(--black); }
+
+  /* DOWNLOAD BTN */
+  .btn-download {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    margin-top: 12px;
+    transition: all 0.2s;
+  }
+
+  .btn-download:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* HISTORY */
+  .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 8px;
+  }
+
+  .history-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .history-item:hover { border-color: var(--gold); }
+
+  .history-item-name {
+    color: var(--gold);
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+
+  .history-item-date {
+    color: var(--muted);
+    font-size: 10px;
+    letter-spacing: 1px;
+  }
+
+  /* CHATBOT PAGE */
+  .chat-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    min-height: calc(100vh - 120px);
+  }
+
+  .chat-sidebar {
+    border-right: 1px solid var(--border);
+    padding: 32px 24px;
+    background: var(--dark);
+  }
+
+  .chat-sidebar-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 14px;
+    letter-spacing: 3px;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .chat-suggestions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .suggestion-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    text-align: left;
+    line-height: 1.5;
+    transition: all 0.2s;
+  }
+
+  .suggestion-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+  .chat-main {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 120px);
+  }
+
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 32px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .chat-messages::-webkit-scrollbar { width: 4px; }
+  .chat-messages::-webkit-scrollbar-track { background: var(--dark); }
+  .chat-messages::-webkit-scrollbar-thumb { background: var(--border); }
+
+  .message {
+    max-width: 75%;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .message.user { align-self: flex-end; }
+  .message.ai { align-self: flex-start; }
+
+  .message-bubble {
+    padding: 14px 18px;
+    line-height: 1.7;
+    font-size: 13px;
+  }
+
+  .message.user .message-bubble {
+    background: var(--gold);
+    color: var(--black);
+  }
+
+  .message.ai .message-bubble {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  .message-time {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+
+  .message.user .message-time { text-align: right; }
+
+  .chat-input-area {
+    border-top: 1px solid var(--border);
+    padding: 20px 40px;
+    display: flex;
+    gap: 12px;
+    background: var(--dark);
+  }
+
+  .chat-input {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .chat-input:focus { border-color: var(--gold); }
+
+  .chat-send-btn {
+    background: var(--gold);
+    border: none;
+    color: var(--black);
+    padding: 12px 24px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .chat-send-btn:hover { background: var(--gold-light); }
+  .chat-send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* LOADING */
+  .typing-indicator {
+    display: flex;
+    gap: 5px;
+    padding: 14px 18px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    width: fit-content;
+  }
+
+  .typing-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--gold);
+    border-radius: 50%;
+    animation: typing 1.2s infinite;
+  }
+
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes typing {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-8px); opacity: 1; }
+  }
+
+  /* PLANS PAGE */
+  .plans-page {
+    padding: 60px 40px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .plans-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 42px;
+    font-weight: 300;
+    text-align: center;
+    margin-bottom: 8px;
+    letter-spacing: 2px;
+  }
+
+  .plans-title em { color: var(--gold); font-style: italic; }
+
+  .plans-subtitle {
+    text-align: center;
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 3px;
+    margin-bottom: 60px;
+    text-transform: uppercase;
+  }
+
+  .plans-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+
+  .plan-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 40px;
+    position: relative;
+  }
+
+  .plan-card.featured {
+    border-color: var(--gold);
+  }
+
+  .plan-card.featured::before {
+    content: 'RECOMMANDÉ';
+    position: absolute;
+    top: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--gold);
+    color: var(--black);
+    font-size: 9px;
+    letter-spacing: 3px;
+    padding: 4px 16px;
+  }
+
+  .plan-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 24px;
+    font-weight: 300;
+    letter-spacing: 4px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+
+  .plan-price {
+    font-size: 36px;
+    color: var(--gold);
+    margin-bottom: 4px;
+  }
+
+  .plan-price span {
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  .plan-period {
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 1px;
+    margin-bottom: 32px;
+  }
+
+  .plan-features {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+
+  .plan-features li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .plan-features li::before {
+    content: '—';
+    color: var(--gold);
+    flex-shrink: 0;
+  }
+
+  .btn-plan {
+    width: 100%;
+    padding: 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-plan-free {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  .btn-plan-free:hover { border-color: var(--gold); color: var(--gold); }
+
+  .btn-plan-pro {
+    background: var(--gold);
+    border: none;
+    color: var(--black);
+  }
+
+  .btn-plan-pro:hover { background: var(--gold-light); }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    background: var(--card);
+    border: 1px solid var(--gold);
+    color: var(--text);
+    padding: 14px 24px;
+    font-size: 12px;
+    letter-spacing: 1px;
+    z-index: 999;
+    animation: slideIn 0.3s ease, slideOut 0.3s ease 2.5s forwards;
+  }
+
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  @keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+  }
+
+  /* SPINNER */
+  .spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--black);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* DECORATIVE LINE */
+  .deco-line {
+    width: 40px;
+    height: 1px;
+    background: var(--gold);
+    margin: 16px 0;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    header { padding: 20px; }
+    .tabs { padding: 0 20px; }
+    .generator-layout { grid-template-columns: 1fr; }
+    .input-panel { border-right: none; border-bottom: 1px solid var(--border); }
+    .chat-layout { grid-template-columns: 1fr; }
+    .chat-sidebar { display: none; }
+    .plans-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">MOD<span>AI</span></div>
+  <div class="plan-badge">
+    PLAN GRATUIT &nbsp;|&nbsp; <span class="counter" id="counterDisplay">5</span> GÉNÉRATIONS RESTANTES
+  </div>
+</header>
+
+<!-- TABS -->
+<nav class="tabs">
+  <div class="tab active" onclick="switchTab('generator')">Générateur</div>
+  <div class="tab" onclick="switchTab('chat')">Assistant IA</div>
+  <div class="tab" onclick="switchTab('history')">Historique</div>
+  <div class="tab" onclick="switchTab('plans')">Plans</div>
+</nav>
+
+<!-- GENERATOR PAGE -->
+<div class="page active" id="page-generator">
+  <div class="generator-layout">
+    <div class="input-panel">
+      <p class="section-title">Informations produit</p>
+
+      <div class="field-group">
+        <label>Nom du produit</label>
+        <input type="text" id="produitNom" placeholder="ex: Robe fleurie été">
+      </div>
+
+      <div class="field-group">
+        <label>Couleur & Matière</label>
+        <input type="text" id="produitDetails" placeholder="ex: Rouge, 100% coton">
+      </div>
+
+      <div class="field-group">
+        <label>Prix</label>
+        <input type="text" id="produitPrix" placeholder="ex: 29€">
+      </div>
+
+      <div class="field-group">
+        <label>Description rapide (optionnel)</label>
+        <textarea id="produitDescription" placeholder="ex: Style bohème, taille haute, parfaite pour l'été"></textarea>
+      </div>
+
+      <div class="field-group">
+        <label>Ton de la marque</label>
+        <select id="produitTon">
+          <option value="luxe">Luxe & Élégant</option>
+          <option value="casual" selected>Casual & Accessible</option>
+          <option value="streetwear">Streetwear & Tendance</option>
+          <option value="jeune">Jeune & Dynamique</option>
+          <option value="eco">Éco-responsable</option>
+        </select>
+      </div>
+
+      <div class="field-group">
+        <label>Plateformes</label>
+        <div class="platforms">
+          <div class="platform-check" onclick="togglePlatform(this)">
+            <input type="checkbox" value="description" checked onclick="event.stopPropagation()"> <span>Description produit</span>
+          </div>
+          <div class="platform-check" onclick="togglePlatform(this)">
+            <input type="checkbox" value="instagram" checked onclick="event.stopPropagation()"> <span>Post Instagram</span>
+          </div>
+          <div class="platform-check" onclick="togglePlatform(this)">
+            <input type="checkbox" value="facebook" onclick="event.stopPropagation()"> <span>Post Facebook</span>
+          </div>
+          <div class="platform-check" onclick="togglePlatform(this)">
+            <input type="checkbox" value="tiktok" onclick="event.stopPropagation()"> <span>Caption TikTok</span>
+          </div>
+          <div class="platform-check" onclick="togglePlatform(this)">
+            <input type="checkbox" value="email" onclick="event.stopPropagation()"> <span>Email marketing</span>
+          </div>
+          <div class="platform-check" onclick="togglePlatform(this)">
+            <input type="checkbox" value="hashtags" onclick="event.stopPropagation()"> <span>Hashtags SEO</span>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-generate" id="generateBtn" onclick="generer()">
+        Générer le contenu
+      </button>
+    </div>
+
+    <div class="output-panel">
+      <p class="section-title">Contenu généré</p>
+
+      <div class="output-tabs" id="outputTabs" style="display:none"></div>
+      <div class="output-content empty" id="outputContent">
+        <div style="text-align:center">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:48px;opacity:0.15;margin-bottom:12px">✦</div>
+          <p>Remplissez le formulaire et cliquez sur Générer</p>
+        </div>
+      </div>
+
+      <button class="btn-download" id="downloadBtn" style="display:none" onclick="telecharger()">
+        ↓ Télécharger tout en .txt
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- CHAT PAGE -->
+<div class="page" id="page-chat">
+  <div class="chat-layout">
+    <div class="chat-sidebar">
+      <p class="chat-sidebar-title">Suggestions</p>
+      <div class="deco-line"></div>
+      <div class="chat-suggestions">
+        <button class="suggestion-btn" onclick="sendSuggestion(this)">Comment améliorer mes descriptions produits ?</button>
+        <button class="suggestion-btn" onclick="sendSuggestion(this)">Quelles tendances mode sont populaires en 2025 ?</button>
+        <button class="suggestion-btn" onclick="sendSuggestion(this)">Comment augmenter mes ventes sur Instagram ?</button>
+        <button class="suggestion-btn" onclick="sendSuggestion(this)">Écris-moi un bio Instagram pour ma boutique mode</button>
+        <button class="suggestion-btn" onclick="sendSuggestion(this)">Comment répondre à un avis négatif client ?</button>
+        <button class="suggestion-btn" onclick="sendSuggestion(this)">Stratégie de contenu pour lancer une nouvelle collection</button>
+      </div>
+    </div>
+
+    <div class="chat-main">
+      <div class="chat-messages" id="chatMessages">
+        <div class="message ai">
+          <div class="message-bubble">Bonjour ! Je suis votre assistant MODAI spécialisé en mode e-commerce. 🛍️<br><br>Je peux vous aider à améliorer votre boutique en ligne, vous conseiller sur les tendances mode, rédiger du contenu, ou répondre à vos questions marketing. Comment puis-je vous aider aujourd'hui ?</div>
+          <div class="message-time">Maintenant</div>
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <input class="chat-input" id="chatInput" placeholder="Posez votre question..." onkeydown="if(event.key==='Enter')envoyerChat()">
+        <button class="chat-send-btn" id="chatSendBtn" onclick="envoyerChat()">Envoyer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY PAGE -->
+<div class="page" id="page-history">
+  <div style="padding:40px;max-width:800px">
+    <p class="section-title">Historique des générations</p>
+    <div class="history-list" id="historyList">
+      <p style="color:var(--muted);font-size:12px;letter-spacing:1px">Aucune génération pour le moment.</p>
+    </div>
+  </div>
+</div>
+
+<!-- PLANS PAGE -->
+<div class="page" id="page-plans">
+  <div class="plans-page">
+    <h2 class="plans-title">Choisissez votre <em>plan</em></h2>
+    <p class="plans-subtitle">Simple. Transparent. Sans engagement.</p>
+
+    <div class="plans-grid">
+      <div class="plan-card">
+        <p class="plan-name">Gratuit</p>
+        <div class="plan-price">0 <span>€</span></div>
+        <p class="plan-period">Pour toujours</p>
+        <ul class="plan-features">
+          <li>5 générations par jour</li>
+          <li>Description produit + Instagram</li>
+          <li>Chatbot assistant mode</li>
+          <li>Historique 10 dernières générations</li>
+          <li>Téléchargement .txt</li>
+        </ul>
+        <button class="btn-plan btn-plan-free">Plan actuel</button>
+      </div>
+
+      <div class="plan-card featured">
+        <p class="plan-name">Pro</p>
+        <div class="plan-price">19 <span>€</span></div>
+        <p class="plan-period">par mois</p>
+        <ul class="plan-features">
+          <li>Générations illimitées</li>
+          <li>Toutes les plateformes : Instagram, Facebook, TikTok, Email</li>
+          <li>Hashtags SEO optimisés</li>
+          <li>Chatbot prioritaire</li>
+          <li>Historique illimité</li>
+          <li>Support prioritaire</li>
+          <li>Nouveautés en avant-première</li>
+        </ul>
+        <button class="btn-plan btn-plan-pro" onclick="showToast('Paiement bientôt disponible — restez connecté !')">Passer Pro</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== TAB LABELS (must be first) =====
+const tabLabels = {
+  description: 'Description',
+  instagram: 'Instagram',
+  facebook: 'Facebook',
+  tiktok: 'TikTok',
+  email: 'Email',
+  hashtags: 'Hashtags'
+};
+
+// ===== STATE =====
+let generatedContents = {};
+let activeOutputTab = '';
+let history = JSON.parse(localStorage.getItem('modai_history') || '[]');
+let dailyCount = parseInt(localStorage.getItem('modai_count') || '0');
+let lastDate = localStorage.getItem('modai_date') || '';
+const MAX_FREE = 5;
+
+// Reset count daily
+const today = new Date().toDateString();
+if (lastDate !== today) {
+  dailyCount = 0;
+  localStorage.setItem('modai_count', '0');
+  localStorage.setItem('modai_date', today);
+}
+
+updateCounter();
+renderHistory();
+
+// ===== PLATFORM TOGGLE =====
+function togglePlatform(div) {
+  const cb = div.querySelector("input[type=checkbox]");
+  cb.checked = !cb.checked;
+  div.classList.toggle("selected", cb.checked);
+}
+
+// Init selected state on load
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".platform-check input:checked").forEach(cb => {
+    cb.closest(".platform-check").classList.add("selected");
+  });
+});
+
+// ===== TABS =====
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    t.classList.toggle('active', ['generator','chat','history','plans'][i] === tab);
+  });
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + tab).classList.add('active');
+  if (tab === 'history') renderHistory();
+}
+
+// ===== COUNTER =====
+function updateCounter() {
+  const remaining = Math.max(0, MAX_FREE - dailyCount);
+  document.getElementById('counterDisplay').textContent = remaining;
+}
+
+// ===== GENERATOR =====
+async function generer() {
+  if (dailyCount >= MAX_FREE) {
+    showToast('Limite atteinte. Passez Pro pour continuer !');
+    switchTab('plans');
+    return;
+  }
+
+  const nom = document.getElementById('produitNom').value.trim();
+  const details = document.getElementById('produitDetails').value.trim();
+  const prix = document.getElementById('produitPrix').value.trim();
+  const desc = document.getElementById('produitDescription').value.trim();
+  const ton = document.getElementById('produitTon').value;
+
+  if (!nom) { showToast('Veuillez entrer le nom du produit.'); return; }
+
+  const platformes = [];
+  document.querySelectorAll('.platform-check input:checked').forEach(cb => platformes.push(cb.value));
+  if (platformes.length === 0) { showToast('Sélectionnez au moins une plateforme.'); return; }
+
+  const btn = document.getElementById('generateBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Génération en cours...';
+
+  const tonMap = {
+    luxe: 'luxueux et raffiné, vocabulaire élégant',
+    casual: 'accessible et chaleureux, proche du client',
+    streetwear: 'urban et tendance, avec de la swag',
+    jeune: 'dynamique et enthousiaste, emojis bienvenus',
+    eco: 'engagé et sincère, valeurs durables'
+  };
+
+  const plateformesMap = {
+    description: 'une description produit optimisée SEO (150-200 mots) pour page e-commerce',
+    instagram: 'un post Instagram captivant avec emojis (200 caractères max) + 10 hashtags',
+    facebook: 'un post Facebook engageant (300 mots max)',
+    tiktok: 'une caption TikTok accrocheuse (100 caractères max) avec hashtags viraux',
+    email: 'un email marketing court et percutant (sujet + corps, 200 mots max)',
+    hashtags: 'une liste de 20 hashtags SEO optimisés pour la mode (mix populaires et niche)'
+  };
+
+  const prompt = `Tu es un expert en marketing mode et e-commerce. Génère du contenu pour ce produit :
+
+Produit : ${nom}
+${details ? 'Détails : ' + details : ''}
+${prix ? 'Prix : ' + prix : ''}
+${desc ? 'Description : ' + desc : ''}
+Ton de marque : ${tonMap[ton]}
+
+Génère les contenus suivants séparés par "===SECTION:nom_section===" :
+${platformes.map(p => `===SECTION:${p}===\n${plateformesMap[p]}`).join('\n\n')}
+
+Important : Commence directement par ===SECTION:... sans introduction. Sois créatif, engageant et adapté au secteur de la mode.`;
+
+  try {
+    const response = await fetch('/api/generer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
+
+    const data = await response.json();
+
+    if (data.erreur) {
+      showToast('Erreur : ' + data.erreur);
+      btn.disabled = false;
+      btn.innerHTML = 'Générer le contenu';
+      return;
+    }
+
+    // Parse sections
+    generatedContents = {};
+    const sections = data.contenu.split(/===SECTION:(\w+)===/);
+    for (let i = 1; i < sections.length; i += 2) {
+      const key = sections[i].trim();
+      const content = sections[i+1] ? sections[i+1].trim() : '';
+      if (platformes.includes(key)) generatedContents[key] = content;
+    }
+
+    // If parsing failed, show all
+    if (Object.keys(generatedContents).length === 0) {
+      platformes.forEach(p => generatedContents[p] = data.contenu);
+    }
+
+    renderOutputTabs(platformes);
+
+    // Save to history
+    dailyCount++;
+    localStorage.setItem('modai_count', dailyCount);
+    updateCounter();
+
+    const historyEntry = {
+      id: Date.now(),
+      nom,
+      date: new Date().toLocaleString('fr-FR'),
+      platformes,
+      contents: { ...generatedContents }
+    };
+    history.unshift(historyEntry);
+    if (history.length > 10) history = history.slice(0, 10);
+    localStorage.setItem('modai_history', JSON.stringify(history));
+
+    document.getElementById('downloadBtn').style.display = 'block';
+    showToast('Contenu généré avec succès !');
+  } catch (err) {
+    showToast('Erreur de connexion. Vérifiez que le serveur tourne.');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = 'Générer le contenu';
+}
+
+
+function renderOutputTabs(platformes) {
+  const tabsEl = document.getElementById('outputTabs');
+  tabsEl.style.display = 'flex';
+  tabsEl.innerHTML = '';
+  platformes.forEach((p, i) => {
+    const div = document.createElement('div');
+    div.className = 'output-tab' + (i === 0 ? ' active' : '');
+    div.textContent = tabLabels[p] || p;
+    div.onclick = () => selectOutputTab(p);
+    tabsEl.appendChild(div);
+  });
+  selectOutputTab(platformes[0]);
+}
+
+function selectOutputTab(key) {
+  activeOutputTab = key;
+  document.querySelectorAll('.output-tab').forEach(t => {
+    t.classList.toggle('active', t.textContent === (tabLabels[key] || key));
+  });
+  const content = generatedContents[key] || '';
+  const el = document.getElementById('outputContent');
+  el.className = 'output-content';
+  el.innerHTML = `<button class="copy-btn" onclick="copier('${key}')">Copier</button>` + content.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+}
+
+function copier(key) {
+  navigator.clipboard.writeText(generatedContents[key] || '');
+  showToast('Copié dans le presse-papier !');
+}
+
+function telecharger() {
+  let txt = 'MODAI — Contenu généré\n' + new Date().toLocaleString('fr-FR') + '\n\n';
+  Object.entries(generatedContents).forEach(([k, v]) => {
+    txt += `=== ${tabLabels[k] || k.toUpperCase()} ===\n${v}\n\n`;
+  });
+  const blob = new Blob([txt], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'modai_contenu.txt';
+  a.click();
+}
+
+// ===== HISTORY =====
+function renderHistory() {
+  const el = document.getElementById('historyList');
+  if (history.length === 0) {
+    el.innerHTML = '<p style="color:var(--muted);font-size:12px;letter-spacing:1px">Aucune génération pour le moment.</p>';
+    return;
+  }
+  el.innerHTML = history.map(h => `
+    <div class="history-item" onclick="loadHistory(${h.id})">
+      <div class="history-item-name">${h.nom}</div>
+      <div class="history-item-date">${h.date} — ${h.platformes.map(p => tabLabels[p]||p).join(', ')}</div>
+    </div>
+  `).join('');
+}
+
+function loadHistory(id) {
+  const entry = history.find(h => h.id === id);
+  if (!entry) return;
+  generatedContents = { ...entry.contents };
+  renderOutputTabs(entry.platformes);
+  document.getElementById('downloadBtn').style.display = 'block';
+  switchTab('generator');
+}
+
+// ===== CHATBOT =====
+async function envoyerChat() {
+  const input = document.getElementById('chatInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  addMessage(msg, 'user');
+  input.value = '';
+  document.getElementById('chatSendBtn').disabled = true;
+
+  const typingId = addTyping();
+
+  try {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg })
+    });
+    const data = await response.json();
+    removeTyping(typingId);
+    addMessage(data.reponse || "Désolé, une erreur s'est produite.", 'ai');
+  } catch {
+    removeTyping(typingId);
+    addMessage("Erreur de connexion au serveur.", 'ai');
+  }
+
+  document.getElementById('chatSendBtn').disabled = false;
+}
+
+function sendSuggestion(btn) {
+  document.getElementById('chatInput').value = btn.textContent;
+  envoyerChat();
+}
+
+function addMessage(text, type) {
+  const msgs = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = `message ${type}`;
+  const time = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  div.innerHTML = `<div class="message-bubble">${text.replace(/\n/g,'<br>')}</div><div class="message-time">${time}</div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+function addTyping() {
+  const msgs = document.getElementById('chatMessages');
+  const id = 'typing-' + Date.now();
+  const div = document.createElement('div');
+  div.className = 'message ai';
+  div.id = id;
+  div.innerHTML = '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>';
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return id;
+}
+
+function removeTyping(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+// ===== TOAST =====
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+</script>
+</body>
+</html>
