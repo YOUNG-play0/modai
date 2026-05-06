@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_from_directory, render_template
+from flask import Flask, request, jsonify, send_from_directory
 from groq import Groq
 import os
 
@@ -8,15 +8,15 @@ chat_history = []
 
 @app.route('/terms')
 def terms():
-    return render_template('terms.html')
+    return send_from_directory('.', 'templatesterms.html')
 
 @app.route('/privacy')
 def privacy():
-    return render_template('privacy.html')
+    return send_from_directory('.', 'templatesprivacy.html')
 
 @app.route('/refund')
 def refund():
-    return render_template('refund.html')
+    return send_from_directory('.', 'templatesrefund.html')
 
 @app.route('/')
 def index():
