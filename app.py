@@ -1,22 +1,16 @@
-from flask import Flask, request, jsonify, send_from_directory, session
+from flask import Flask, request, jsonify, send_from_directory
 from groq import Groq
 from functools import wraps
 import psycopg2
 import psycopg2.extras
 import bcrypt
 import os
-from datetime import datetime, date
+import jwt
+import datetime
 
 app = Flask(__name__, static_folder='.')
-app.secret_key = os.environ.get("SECRET_KEY", "modai-secret-key-2024")
 
-# Session config
-app.config['SESSION_COOKIE_SECURE'] = True
-app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['PERMANENT_SESSION_LIFETIME'] = 86400 * 30  # 30 jours
-app.config['SESSION_COOKIE_NAME'] = 'modai_session'
-
+SECRET_KEY = os.environ.get("SECRET_KEY", "modai-secret-key-2024")
 DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://postgres:oVvd5ZovMp7ZkFj2@db.lbkeettjmqiqitnxalwr.supabase.co:5432/postgres")
 
 def get_db():
@@ -59,10 +53,10 @@ def get_user(email):
     return user
 
 def reset_daily_if_needed(user):
-    today = date.today()
+    today = datetime.date.today()
     last = user['last_reset']
     if isinstance(last, str):
-        last = datetime.strptime(last, '%Y-%m-%d').date()
+        last = datetime.datetime.strptime(last, '%Y-%m-%d').date()
     if last < today:
         conn = get_db()
         cur = conn.cursor()
@@ -73,11 +67,36 @@ def reset_daily_if_needed(user):
         user['daily_count'] = 0
     return user
 
+def create_token(email):
+    payload = {
+        'email': email,
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(days=30)
+    }
+    return jwt.encode(payload, SECRET_KEY, algorithm='HS256')
+
+def verify_token(token):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+        return payload['email']
+    except:
+        return None
+
+def get_token_from_request():
+    auth = request.headers.get('Authorization', '')
+    if auth.startswith('Bearer '):
+        return auth[7:]
+    return None
+
 def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        if 'user_email' not in session:
+        token = get_token_from_request()
+        if not token:
             return jsonify({'erreur': 'Non connecte', 'redirect': '/login'}), 401
+        email = verify_token(token)
+        if not email:
+            return jsonify({'erreur': 'Token invalide', 'redirect': '/login'}), 401
+        request.user_email = email
         return f(*args, **kwargs)
     return decorated
 
@@ -130,9 +149,8 @@ def signup():
         conn.close()
     except Exception as e:
         return jsonify({'erreur': str(e)}), 500
-    session.permanent = True
-    session['user_email'] = email
-    return jsonify({'success': True, 'email': email, 'plan': 'free'})
+    token = create_token(email)
+    return jsonify({'success': True, 'email': email, 'plan': 'free', 'token': token})
 
 @app.route('/api/login', methods=['POST'])
 def login():
@@ -142,22 +160,19 @@ def login():
     user = get_user(email)
     if not user or not bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
         return jsonify({'erreur': 'Email ou mot de passe incorrect'}), 401
-    session.permanent = True
-    session['user_email'] = email
-    return jsonify({'success': True, 'email': email, 'plan': user['plan']})
-
-@app.route('/api/logout', methods=['POST'])
-def logout():
-    session.clear()
-    return jsonify({'success': True})
+    token = create_token(email)
+    return jsonify({'success': True, 'email': email, 'plan': user['plan'], 'token': token})
 
 @app.route('/api/me', methods=['GET'])
 def me():
-    if 'user_email' not in session:
+    token = get_token_from_request()
+    if not token:
         return jsonify({'connecte': False})
-    user = get_user(session['user_email'])
+    email = verify_token(token)
+    if not email:
+        return jsonify({'connecte': False})
+    user = get_user(email)
     if not user:
-        session.clear()
         return jsonify({'connecte': False})
     user = reset_daily_if_needed(user)
     restantes = 5 - user['daily_count'] if user['plan'] == 'free' else 999
@@ -172,7 +187,7 @@ def me():
 @app.route('/api/generer', methods=['POST'])
 @login_required
 def generer():
-    user = get_user(session['user_email'])
+    user = get_user(request.user_email)
     user = reset_daily_if_needed(user)
     if user['plan'] == 'free' and user['daily_count'] >= 5:
         return jsonify({'erreur': 'Limite atteinte. Passez Pro !', 'upgrade': True}), 403
@@ -208,7 +223,7 @@ chat_history = {}
 def chat():
     data = request.get_json()
     message = data.get('message', '')
-    email = session['user_email']
+    email = request.user_email
     if not message:
         return jsonify({'erreur': 'Message manquant'}), 400
     if email not in chat_history:
@@ -243,7 +258,6 @@ def gumroad_webhook():
         cur = conn.cursor()
         if refunded == 'true':
             cur.execute("UPDATE users SET plan='free' WHERE email=%s", (email,))
-            print(f"Downgraded: {email}")
         else:
             hashed = bcrypt.hashpw(sale_id.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
             cur.execute("""
@@ -251,7 +265,6 @@ def gumroad_webhook():
                 VALUES (%s, %s, 'pro', %s)
                 ON CONFLICT (email) DO UPDATE SET plan='pro', gumroad_id=%s
             """, (email, hashed, sale_id, sale_id))
-            print(f"Upgraded Pro: {email}")
         conn.commit()
         cur.close()
         conn.close()
@@ -260,5 +273,5 @@ def gumroad_webhook():
         return jsonify({'erreur': str(e)}), 500
 
 if __name__ == '__main__':
-    print("MODAI V3 - http://localhost:5000")
+    print("MODAI V3 JWT - http://localhost:5000")
     app.run(debug=True, port=5000)
