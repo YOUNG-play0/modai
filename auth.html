@@ -246,6 +246,7 @@ async function doLogin() {
     const data = await res.json();
 
     if (data.success) {
+      localStorage.setItem('modai_token', data.token);
       showSuccess('Connecté ! Redirection...');
       setTimeout(() => window.location.href = '/', 1000);
     } else {
@@ -279,6 +280,7 @@ async function doSignup() {
     const data = await res.json();
 
     if (data.success) {
+      localStorage.setItem('modai_token', data.token);
       showSuccess('Compte créé ! Redirection...');
       setTimeout(() => window.location.href = '/', 1000);
     } else {
