@@ -94,6 +94,14 @@ def index():
 def landing():
     return send_from_directory('.', 'landing.html')
 
+@app.route('/login')
+def login_page():
+    return send_from_directory('.', 'auth.html')
+
+@app.route('/signup')
+def signup_page():
+    return send_from_directory('.', 'auth.html')
+
 @app.route('/api/signup', methods=['POST'])
 def signup():
     data = request.get_json()
