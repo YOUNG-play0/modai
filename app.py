@@ -10,6 +10,13 @@ from datetime import datetime, date
 app = Flask(__name__, static_folder='.')
 app.secret_key = os.environ.get("SECRET_KEY", "modai-secret-key-2024")
 
+# Session config
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['PERMANENT_SESSION_LIFETIME'] = 86400 * 30  # 30 jours
+app.config['SESSION_COOKIE_NAME'] = 'modai_session'
+
 DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://postgres:oVvd5ZovMp7ZkFj2@db.lbkeettjmqiqitnxalwr.supabase.co:5432/postgres")
 
 def get_db():
@@ -123,6 +130,7 @@ def signup():
         conn.close()
     except Exception as e:
         return jsonify({'erreur': str(e)}), 500
+    session.permanent = True
     session['user_email'] = email
     return jsonify({'success': True, 'email': email, 'plan': 'free'})
 
@@ -134,6 +142,7 @@ def login():
     user = get_user(email)
     if not user or not bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
         return jsonify({'erreur': 'Email ou mot de passe incorrect'}), 401
+    session.permanent = True
     session['user_email'] = email
     return jsonify({'success': True, 'email': email, 'plan': user['plan']})
 
