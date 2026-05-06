@@ -692,7 +692,7 @@
 <header>
   <div class="logo">MOD<span>AI</span></div>
   <div class="plan-badge">
-    PLAN GRATUIT &nbsp;|&nbsp; <span class="counter" id="counterDisplay">5</span> GÉNÉRATIONS RESTANTES
+    <span id="planLabel">PLAN GRATUIT</span> &nbsp;|&nbsp; <span class="counter" id="counterDisplay">5</span> <span id="genLabel">GÉNÉRATIONS RESTANTES</span>
   </div>
 </header>
 
@@ -863,13 +863,60 @@
           <li>Support prioritaire</li>
           <li>Nouveautés en avant-première</li>
         </ul>
-        <button class="btn-plan btn-plan-pro" onclick="showToast('Paiement bientôt disponible — restez connecté !')">Passer Pro</button>
+        <button class="btn-plan btn-plan-pro" onclick="window.open('https://modaiv2.gumroad.com/l/modai-pro', '_blank')">Passer Pro</button>
       </div>
     </div>
   </div>
 </div>
 
 <script>
+// ===== AUTH CHECK =====
+let currentUser = null;
+
+async function checkAuth() {
+  try {
+    const res = await fetch('/api/me');
+    const data = await res.json();
+    if (!data.connecte) {
+      window.location.href = '/login';
+      return;
+    }
+    currentUser = data;
+    // Update header
+    document.getElementById('userInfo').style.display = 'flex';
+    document.getElementById('userInfo').style.alignItems = 'center';
+    document.getElementById('userEmail').textContent = data.email;
+    // Update plan badge
+    if (data.plan === 'pro') {
+      document.getElementById('planLabel').textContent = 'PLAN PRO';
+      document.getElementById('planLabel').style.color = 'var(--gold)';
+      document.getElementById('counterDisplay').textContent = '∞';
+      document.getElementById('genLabel').textContent = 'GÉNÉRATIONS';
+    } else {
+      document.getElementById('counterDisplay').textContent = data.generations_restantes;
+    }
+    // Update free plan button
+    const freePlanBtn = document.querySelector('.btn-plan-free');
+    if (freePlanBtn && data.plan === 'free') {
+      freePlanBtn.textContent = 'Plan actuel';
+    } else if (freePlanBtn && data.plan === 'pro') {
+      freePlanBtn.textContent = 'Plan actif ✦';
+      freePlanBtn.style.borderColor = 'var(--gold)';
+      freePlanBtn.style.color = 'var(--gold)';
+    }
+  } catch (e) {
+    window.location.href = '/login';
+  }
+}
+
+async function doLogout() {
+  await fetch('/api/logout', { method: 'POST' });
+  window.location.href = '/login';
+}
+
+// Check auth on load
+checkAuth();
+
 // ===== TAB LABELS (must be first) =====
 const tabLabels = {
   description: 'Description',
@@ -879,25 +926,6 @@ const tabLabels = {
   email: 'Email',
   hashtags: 'Hashtags'
 };
-
-// ===== STATE =====
-let generatedContents = {};
-let activeOutputTab = '';
-let history = JSON.parse(localStorage.getItem('modai_history') || '[]');
-let dailyCount = parseInt(localStorage.getItem('modai_count') || '0');
-let lastDate = localStorage.getItem('modai_date') || '';
-const MAX_FREE = 5;
-
-// Reset count daily
-const today = new Date().toDateString();
-if (lastDate !== today) {
-  dailyCount = 0;
-  localStorage.setItem('modai_count', '0');
-  localStorage.setItem('modai_date', today);
-}
-
-updateCounter();
-renderHistory();
 
 // ===== PLATFORM TOGGLE =====
 function togglePlatform(div) {
@@ -931,7 +959,8 @@ function updateCounter() {
 
 // ===== GENERATOR =====
 async function generer() {
-  if (dailyCount >= MAX_FREE) {
+  // Check limit from server
+  if (currentUser && currentUser.plan === 'free' && currentUser.generations_restantes <= 0) {
     showToast('Limite atteinte. Passez Pro pour continuer !');
     switchTab('plans');
     return;
@@ -992,6 +1021,17 @@ Important : Commence directement par ===SECTION:... sans introduction. Sois cré
 
     const data = await response.json();
 
+    if (data.redirect) {
+      window.location.href = data.redirect;
+      return;
+    }
+    if (data.upgrade) {
+      showToast('Limite atteinte. Passez Pro !');
+      switchTab('plans');
+      btn.disabled = false;
+      btn.innerHTML = 'Générer le contenu';
+      return;
+    }
     if (data.erreur) {
       showToast('Erreur : ' + data.erreur);
       btn.disabled = false;
@@ -1015,10 +1055,11 @@ Important : Commence directement par ===SECTION:... sans introduction. Sois cré
 
     renderOutputTabs(platformes);
 
-    // Save to history
-    dailyCount++;
-    localStorage.setItem('modai_count', dailyCount);
-    updateCounter();
+    // Update user state
+    if (currentUser && currentUser.plan === 'free') {
+      currentUser.generations_restantes = Math.max(0, currentUser.generations_restantes - 1);
+      document.getElementById('counterDisplay').textContent = currentUser.generations_restantes;
+    }
 
     const historyEntry = {
       id: Date.now(),
