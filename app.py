@@ -1,11 +1,22 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, render_template
 from groq import Groq
 import os
 
 app = Flask(__name__, static_folder='.')
 client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
-
 chat_history = []
+
+@app.route('/terms')
+def terms():
+    return render_template('terms.html')
+
+@app.route('/privacy')
+def privacy():
+    return render_template('privacy.html')
+
+@app.route('/refund')
+def refund():
+    return render_template('refund.html')
 
 @app.route('/')
 def index():
