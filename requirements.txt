@@ -1,6 +1,3 @@
 flask
 groq
 gunicorn
-psycopg2-binary
-bcrypt
-PyJWT
