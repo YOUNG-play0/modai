@@ -692,7 +692,7 @@
 <header>
   <div class="logo">MOD<span>AI</span></div>
   <div class="plan-badge">
-    <span id="planLabel">PLAN GRATUIT</span> &nbsp;|&nbsp; <span class="counter" id="counterDisplay">5</span> <span id="genLabel">GÉNÉRATIONS RESTANTES</span>
+    PLAN GRATUIT &nbsp;|&nbsp; <span class="counter" id="counterDisplay">5</span> GÉNÉRATIONS RESTANTES
   </div>
 </header>
 
@@ -870,72 +870,6 @@
 </div>
 
 <script>
-// ===== AUTH CHECK =====
-let currentUser = null;
-
-function getToken() {
-  return localStorage.getItem('modai_token');
-}
-
-function authHeaders() {
-  const token = getToken();
-  return {
-    'Content-Type': 'application/json',
-    'Authorization': token ? `Bearer ${token}` : ''
-  };
-}
-
-async function checkAuth() {
-  const token = getToken();
-  if (!token) {
-    window.location.href = '/login';
-    return;
-  }
-  try {
-    const res = await fetch('/api/me', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    const data = await res.json();
-    if (!data.connecte) {
-      window.location.href = '/login';
-      return;
-    }
-    currentUser = data;
-    // Update header
-    document.getElementById('userInfo').style.display = 'flex';
-    document.getElementById('userInfo').style.alignItems = 'center';
-    document.getElementById('userEmail').textContent = data.email;
-    // Update plan badge
-    if (data.plan === 'pro') {
-      document.getElementById('planLabel').textContent = 'PLAN PRO';
-      document.getElementById('planLabel').style.color = 'var(--gold)';
-      document.getElementById('counterDisplay').textContent = '∞';
-      document.getElementById('genLabel').textContent = 'GÉNÉRATIONS';
-    } else {
-      document.getElementById('counterDisplay').textContent = data.generations_restantes;
-    }
-    // Update free plan button
-    const freePlanBtn = document.querySelector('.btn-plan-free');
-    if (freePlanBtn && data.plan === 'free') {
-      freePlanBtn.textContent = 'Plan actuel';
-    } else if (freePlanBtn && data.plan === 'pro') {
-      freePlanBtn.textContent = 'Plan actif ✦';
-      freePlanBtn.style.borderColor = 'var(--gold)';
-      freePlanBtn.style.color = 'var(--gold)';
-    }
-  } catch (e) {
-    window.location.href = '/login';
-  }
-}
-
-async function doLogout() {
-  localStorage.removeItem('modai_token');
-  window.location.href = '/login';
-}
-
-// Check auth on load
-checkAuth();
-
 // ===== TAB LABELS (must be first) =====
 const tabLabels = {
   description: 'Description',
@@ -978,8 +912,7 @@ function updateCounter() {
 
 // ===== GENERATOR =====
 async function generer() {
-  // Check limit from server
-  if (currentUser && currentUser.plan === 'free' && currentUser.generations_restantes <= 0) {
+  if (dailyCount >= MAX_FREE) {
     showToast('Limite atteinte. Passez Pro pour continuer !');
     switchTab('plans');
     return;
@@ -1034,23 +967,12 @@ Important : Commence directement par ===SECTION:... sans introduction. Sois cré
   try {
     const response = await fetch('/api/generer', {
       method: 'POST',
-      headers: authHeaders(),
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt })
     });
 
     const data = await response.json();
 
-    if (data.redirect) {
-      window.location.href = data.redirect;
-      return;
-    }
-    if (data.upgrade) {
-      showToast('Limite atteinte. Passez Pro !');
-      switchTab('plans');
-      btn.disabled = false;
-      btn.innerHTML = 'Générer le contenu';
-      return;
-    }
     if (data.erreur) {
       showToast('Erreur : ' + data.erreur);
       btn.disabled = false;
@@ -1074,11 +996,10 @@ Important : Commence directement par ===SECTION:... sans introduction. Sois cré
 
     renderOutputTabs(platformes);
 
-    // Update user state
-    if (currentUser && currentUser.plan === 'free') {
-      currentUser.generations_restantes = Math.max(0, currentUser.generations_restantes - 1);
-      document.getElementById('counterDisplay').textContent = currentUser.generations_restantes;
-    }
+    // Save to history
+    dailyCount++;
+    localStorage.setItem('modai_count', dailyCount);
+    updateCounter();
 
     const historyEntry = {
       id: Date.now(),
@@ -1183,7 +1104,7 @@ async function envoyerChat() {
   try {
     const response = await fetch('/api/chat', {
       method: 'POST',
-      headers: authHeaders(),
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: msg })
     });
     const data = await response.json();
