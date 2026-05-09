@@ -121,6 +121,19 @@
   .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--black); border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 8px; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .deco-line { width: 40px; height: 1px; background: var(--gold); margin: 16px 0; }
+
+  /* PRO MODAL */
+  #pro-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+  #pro-overlay.open { display: flex; }
+
   @media (max-width: 900px) {
     header { padding: 20px; }
     .tabs { padding: 0 20px; }
@@ -291,8 +304,37 @@
           <li>Support prioritaire</li>
           <li>Nouveautés en avant-première</li>
         </ul>
-        <button class="btn-plan btn-plan-pro" onclick="window.open('https://modaiv2.gumroad.com/l/modai-pro', '_blank')">Passer Pro</button>
+        <!-- BOUTON CORRIGÉ — ouvre le modal au lieu de Gumroad -->
+        <button class="btn-plan btn-plan-pro" onclick="openProModal()">Passer Pro</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CLÉ PRO -->
+<div id="pro-overlay">
+  <div style="background:#111;border:1px solid rgba(201,168,76,0.3);padding:40px;max-width:420px;width:90%;text-align:center;">
+    <div style="font-size:2rem;margin-bottom:16px;">✦</div>
+    <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:#C9A84C;font-weight:300;margin-bottom:8px;">Accès Pro</h2>
+    <p style="font-family:'DM Mono',monospace;font-size:0.65rem;color:#a0998e;letter-spacing:0.1em;margin-bottom:28px;">ENTREZ VOTRE CLÉ D'ACCÈS</p>
+    <input type="text" id="pro-key-input" placeholder="MODAI-PRO-XXXX"
+      style="width:100%;background:#0a0a0a;border:1px solid rgba(201,168,76,0.3);color:#F5F0E8;font-family:'DM Mono',monospace;font-size:0.85rem;letter-spacing:0.15em;padding:14px 18px;outline:none;text-align:center;margin-bottom:12px;text-transform:uppercase;"
+      onkeydown="if(event.key==='Enter')verifyProKey()">
+    <div id="key-error" style="color:#e05;font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;margin-bottom:12px;display:none;">CLÉ INVALIDE — VÉRIFIEZ VOTRE EMAIL</div>
+    <button onclick="verifyProKey()"
+      style="width:100%;background:linear-gradient(135deg,#C9A84C,#E8C97A);color:#080808;border:none;font-family:'DM Mono',monospace;font-size:0.7rem;letter-spacing:0.2em;padding:14px;cursor:pointer;margin-bottom:12px;">
+      ACTIVER PRO
+    </button>
+    <button onclick="closeProModal()"
+      style="background:none;border:none;color:#a0998e;font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;cursor:pointer;text-decoration:underline;">
+      Annuler
+    </button>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(201,168,76,0.15);">
+      <p style="font-family:'DM Mono',monospace;font-size:0.6rem;color:#a0998e;margin-bottom:8px;">Pas encore de clé ?</p>
+      <button onclick="window.open('https://modaiv2.gumroad.com/l/modai-pro','_blank')"
+        style="background:none;border:1px solid rgba(201,168,76,0.3);color:#C9A84C;font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;padding:8px 16px;cursor:pointer;">
+        ACHETER SUR GUMROAD →
+      </button>
     </div>
   </div>
 </div>
@@ -308,7 +350,7 @@ const tabLabels = {
   hashtags: 'Hashtags'
 };
 
-// ===== STATE (déclaré ici, avant tout usage) =====
+// ===== STATE =====
 const MAX_FREE = 5;
 const todayStr = new Date().toDateString();
 if (localStorage.getItem('modai_day') !== todayStr) {
@@ -319,6 +361,14 @@ let dailyCount = parseInt(localStorage.getItem('modai_count') || '0');
 let generatedContents = {};
 let activeOutputTab = '';
 let generationHistory = JSON.parse(localStorage.getItem('modai_history') || '[]');
+
+// ===== CHECK PRO AU CHARGEMENT =====
+(function checkProOnLoad() {
+  const key = localStorage.getItem('modai_pro_key');
+  if (key) {
+    window.location.href = '/pro';
+  }
+})();
 
 // ===== INIT COUNTER =====
 function updateCounter() {
@@ -345,6 +395,49 @@ function switchTab(tab) {
   document.getElementById('page-' + tab).classList.add('active');
   if (tab === 'history') renderHistory();
 }
+
+// ===== PRO MODAL =====
+function openProModal() {
+  document.getElementById('pro-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('pro-key-input').focus(), 100);
+}
+
+function closeProModal() {
+  document.getElementById('pro-overlay').classList.remove('open');
+  document.getElementById('key-error').style.display = 'none';
+  document.getElementById('pro-key-input').value = '';
+}
+
+async function verifyProKey() {
+  const key = document.getElementById('pro-key-input').value.trim().toUpperCase();
+  if (!key) return;
+
+  try {
+    const res = await fetch('/api/verify-key', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key })
+    });
+    const data = await res.json();
+
+    if (data.valid) {
+      localStorage.setItem('modai_pro_key', key);
+      window.location.href = '/pro';
+    } else {
+      document.getElementById('key-error').style.display = 'block';
+      const input = document.getElementById('pro-key-input');
+      input.style.borderColor = '#e05';
+      setTimeout(() => { input.style.borderColor = 'rgba(201,168,76,0.3)'; }, 2000);
+    }
+  } catch(e) {
+    document.getElementById('key-error').style.display = 'block';
+  }
+}
+
+// Fermer modal en cliquant dehors
+document.getElementById('pro-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeProModal();
+});
 
 // ===== GENERATOR =====
 async function generer() {
@@ -589,81 +682,5 @@ function showToast(msg) {
   setTimeout(() => t.remove(), 3000);
 }
 </script>
-  <!-- ===== MODAL CLÉ PRO — coller juste avant </body> dans index.html ===== -->
-
-<!-- Overlay -->
-<div id="pro-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:1000;display:none;align-items:center;justify-content:center;">
-  <div style="background:#111;border:1px solid rgba(201,168,76,0.3);padding:40px;max-width:420px;width:90%;text-align:center;">
-    <div style="font-size:2rem;margin-bottom:16px;">✦</div>
-    <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:#C9A84C;font-weight:300;margin-bottom:8px;">Accès Pro</h2>
-    <p style="font-family:'DM Mono',monospace;font-size:0.65rem;color:#a0998e;letter-spacing:0.1em;margin-bottom:28px;">ENTREZ VOTRE CLÉ D'ACCÈS</p>
-    <input type="text" id="pro-key-input" placeholder="MODAI-PRO-XXXX"
-      style="width:100%;background:#0a0a0a;border:1px solid rgba(201,168,76,0.3);color:#F5F0E8;font-family:'DM Mono',monospace;font-size:0.85rem;letter-spacing:0.15em;padding:14px 18px;outline:none;text-align:center;margin-bottom:12px;text-transform:uppercase;"
-      onkeydown="if(event.key==='Enter')verifyProKey()">
-    <div id="key-error" style="color:#e05;font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;margin-bottom:12px;display:none;">CLÉ INVALIDE — VÉRIFIEZ VOTRE EMAIL</div>
-    <button onclick="verifyProKey()"
-      style="width:100%;background:linear-gradient(135deg,#C9A84C,#E8C97A);color:#080808;border:none;font-family:'DM Mono',monospace;font-size:0.7rem;letter-spacing:0.2em;padding:14px;cursor:pointer;margin-bottom:12px;">
-      ACTIVER PRO
-    </button>
-    <button onclick="closeProModal()"
-      style="background:none;border:none;color:#a0998e;font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;cursor:pointer;text-decoration:underline;">
-      Annuler
-    </button>
-  </div>
-</div>
-
-<!-- ===== SCRIPT — coller dans le bloc <script> de index.html ===== -->
-<script>
-function openProModal() {
-  document.getElementById('pro-overlay').style.display = 'flex';
-  setTimeout(() => document.getElementById('pro-key-input').focus(), 100);
-}
-
-function closeProModal() {
-  document.getElementById('pro-overlay').style.display = 'none';
-  document.getElementById('key-error').style.display = 'none';
-  document.getElementById('pro-key-input').value = '';
-}
-
-async function verifyProKey() {
-  const key = document.getElementById('pro-key-input').value.trim().toUpperCase();
-  if (!key) return;
-
-  const btn = document.querySelector('#pro-overlay button');
-
-  try {
-    const res = await fetch('/api/verify-key', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key })
-    });
-    const data = await res.json();
-
-    if (data.valid) {
-      localStorage.setItem('modai_pro_key', key);
-      window.location.href = '/pro';
-    } else {
-      document.getElementById('key-error').style.display = 'block';
-      document.getElementById('pro-key-input').style.borderColor = '#e05';
-      setTimeout(() => {
-        document.getElementById('pro-key-input').style.borderColor = 'rgba(201,168,76,0.3)';
-      }, 2000);
-    }
-  } catch(e) {
-    document.getElementById('key-error').style.display = 'block';
-  }
-}
-
-// Vérifier si déjà Pro au chargement
-window.addEventListener('load', () => {
-  const key = localStorage.getItem('modai_pro_key');
-  if (key) {
-    window.location.href = '/pro';
-  }
-});
-</script>
-
-<!-- ===== BOUTON PASSER PRO — remplace l'ancien dans index.html ===== -->
-<!-- Cherche ton bouton "Passer Pro" et remplace onclick par : onclick="openProModal()" -->
 </body>
 </html>
