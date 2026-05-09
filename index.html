@@ -589,5 +589,81 @@ function showToast(msg) {
   setTimeout(() => t.remove(), 3000);
 }
 </script>
+  <!-- ===== MODAL CLÉ PRO — coller juste avant </body> dans index.html ===== -->
+
+<!-- Overlay -->
+<div id="pro-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:1000;display:none;align-items:center;justify-content:center;">
+  <div style="background:#111;border:1px solid rgba(201,168,76,0.3);padding:40px;max-width:420px;width:90%;text-align:center;">
+    <div style="font-size:2rem;margin-bottom:16px;">✦</div>
+    <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:#C9A84C;font-weight:300;margin-bottom:8px;">Accès Pro</h2>
+    <p style="font-family:'DM Mono',monospace;font-size:0.65rem;color:#a0998e;letter-spacing:0.1em;margin-bottom:28px;">ENTREZ VOTRE CLÉ D'ACCÈS</p>
+    <input type="text" id="pro-key-input" placeholder="MODAI-PRO-XXXX"
+      style="width:100%;background:#0a0a0a;border:1px solid rgba(201,168,76,0.3);color:#F5F0E8;font-family:'DM Mono',monospace;font-size:0.85rem;letter-spacing:0.15em;padding:14px 18px;outline:none;text-align:center;margin-bottom:12px;text-transform:uppercase;"
+      onkeydown="if(event.key==='Enter')verifyProKey()">
+    <div id="key-error" style="color:#e05;font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;margin-bottom:12px;display:none;">CLÉ INVALIDE — VÉRIFIEZ VOTRE EMAIL</div>
+    <button onclick="verifyProKey()"
+      style="width:100%;background:linear-gradient(135deg,#C9A84C,#E8C97A);color:#080808;border:none;font-family:'DM Mono',monospace;font-size:0.7rem;letter-spacing:0.2em;padding:14px;cursor:pointer;margin-bottom:12px;">
+      ACTIVER PRO
+    </button>
+    <button onclick="closeProModal()"
+      style="background:none;border:none;color:#a0998e;font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;cursor:pointer;text-decoration:underline;">
+      Annuler
+    </button>
+  </div>
+</div>
+
+<!-- ===== SCRIPT — coller dans le bloc <script> de index.html ===== -->
+<script>
+function openProModal() {
+  document.getElementById('pro-overlay').style.display = 'flex';
+  setTimeout(() => document.getElementById('pro-key-input').focus(), 100);
+}
+
+function closeProModal() {
+  document.getElementById('pro-overlay').style.display = 'none';
+  document.getElementById('key-error').style.display = 'none';
+  document.getElementById('pro-key-input').value = '';
+}
+
+async function verifyProKey() {
+  const key = document.getElementById('pro-key-input').value.trim().toUpperCase();
+  if (!key) return;
+
+  const btn = document.querySelector('#pro-overlay button');
+
+  try {
+    const res = await fetch('/api/verify-key', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key })
+    });
+    const data = await res.json();
+
+    if (data.valid) {
+      localStorage.setItem('modai_pro_key', key);
+      window.location.href = '/pro';
+    } else {
+      document.getElementById('key-error').style.display = 'block';
+      document.getElementById('pro-key-input').style.borderColor = '#e05';
+      setTimeout(() => {
+        document.getElementById('pro-key-input').style.borderColor = 'rgba(201,168,76,0.3)';
+      }, 2000);
+    }
+  } catch(e) {
+    document.getElementById('key-error').style.display = 'block';
+  }
+}
+
+// Vérifier si déjà Pro au chargement
+window.addEventListener('load', () => {
+  const key = localStorage.getItem('modai_pro_key');
+  if (key) {
+    window.location.href = '/pro';
+  }
+});
+</script>
+
+<!-- ===== BOUTON PASSER PRO — remplace l'ancien dans index.html ===== -->
+<!-- Cherche ton bouton "Passer Pro" et remplace onclick par : onclick="openProModal()" -->
 </body>
 </html>
