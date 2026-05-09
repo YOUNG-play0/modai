@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MODAI Pro — Illimité</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #E8C97A;
+    --black: #080808;
+    --black-2: #111111;
+    --black-3: #1a1a1a;
+    --white: #F5F0E8;
+    --white-dim: #a0998e;
+    --border: rgba(201,168,76,0.2);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Cormorant Garamond', serif;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 40px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--black);
+    z-index: 100;
+  }
+  .logo { font-size: 1.4rem; letter-spacing: 0.3em; color: var(--gold); font-weight: 300; }
+  .pro-badge {
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    color: var(--black);
+    font-size: 0.65rem;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.15em;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 400;
+  }
+  .header-right { display: flex; align-items: center; gap: 16px; }
+  .gen-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--gold);
+    letter-spacing: 0.1em;
+  }
+  .btn-logout {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--white-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .btn-logout:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* MAIN */
+  main { max-width: 900px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  .welcome-banner {
+    background: linear-gradient(135deg, rgba(201,168,76,0.08), rgba(201,168,76,0.03));
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--gold);
+    padding: 20px 28px;
+    margin-bottom: 40px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .welcome-banner .icon { font-size: 1.8rem; }
+  .welcome-banner h2 { font-size: 1.1rem; font-weight: 400; color: var(--gold); letter-spacing: 0.05em; }
+  .welcome-banner p { font-size: 0.85rem; color: var(--white-dim); margin-top: 4px; font-family: 'DM Mono', monospace; }
+
+  /* FORM */
+  .form-section { margin-bottom: 32px; }
+  label {
+    display: block;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+  input[type="text"], textarea, select {
+    width: 100%;
+    background: var(--black-2);
+    border: 1px solid var(--border);
+    color: var(--white);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1rem;
+    padding: 14px 18px;
+    outline: none;
+    transition: border-color 0.3s;
+    resize: vertical;
+  }
+  input[type="text"]:focus, textarea:focus, select:focus { border-color: var(--gold); }
+  select option { background: var(--black-2); }
+  textarea { min-height: 90px; }
+
+  /* PLATFORMS */
+  .platforms-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  @media(max-width:600px) { .platforms-grid { grid-template-columns: repeat(2,1fr); } }
+  .platform-btn {
+    background: var(--black-2);
+    border: 1px solid var(--border);
+    color: var(--white-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    padding: 12px 8px;
+    cursor: pointer;
+    transition: all 0.25s;
+    text-align: center;
+  }
+  .platform-btn:hover { border-color: var(--gold); color: var(--white); }
+  .platform-btn.selected {
+    background: rgba(201,168,76,0.1);
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+  .platform-btn .icon { display: block; font-size: 1.1rem; margin-bottom: 4px; }
+
+  /* TONE */
+  .tone-grid {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .tone-btn {
+    background: var(--black-2);
+    border: 1px solid var(--border);
+    color: var(--white-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+  .tone-btn:hover { border-color: var(--gold); color: var(--white); }
+  .tone-btn.selected { background: rgba(201,168,76,0.1); border-color: var(--gold); color: var(--gold); }
+
+  /* GENERATE BTN */
+  .btn-generate {
+    width: 100%;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    color: var(--black);
+    border: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.25em;
+    padding: 18px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-transform: uppercase;
+    font-weight: 400;
+    margin-top: 24px;
+  }
+  .btn-generate:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* RESULTS */
+  #results { margin-top: 40px; }
+  .result-block {
+    background: var(--black-2);
+    border: 1px solid var(--border);
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--black-3);
+  }
+  .result-platform {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: var(--gold);
+    text-transform: uppercase;
+  }
+  .btn-copy {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--white-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    padding: 5px 12px;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+  .btn-copy:hover { border-color: var(--gold); color: var(--gold); }
+  .btn-copy.copied { border-color: #4CAF50; color: #4CAF50; }
+  .result-content {
+    padding: 20px;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--white);
+    white-space: pre-wrap;
+    font-family: 'Cormorant Garamond', serif;
+  }
+
+  /* HISTORY */
+  #history-section { margin-top: 60px; }
+  .section-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .history-item {
+    background: var(--black-2);
+    border: 1px solid var(--border);
+    padding: 14px 18px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: border-color 0.25s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .history-item:hover { border-color: var(--gold); }
+  .history-item-name { font-size: 0.95rem; color: var(--white); }
+  .history-item-meta { font-family: 'DM Mono', monospace; font-size: 0.6rem; color: var(--white-dim); }
+
+  /* CHAT */
+  #chat-section { margin-top: 60px; }
+  .chat-box {
+    background: var(--black-2);
+    border: 1px solid var(--border);
+    height: 320px;
+    overflow-y: auto;
+    padding: 20px;
+    margin-bottom: 12px;
+    scroll-behavior: smooth;
+  }
+  .chat-msg { margin-bottom: 16px; }
+  .chat-msg.user .bubble {
+    background: rgba(201,168,76,0.1);
+    border: 1px solid var(--border);
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    max-width: 75%;
+    margin-left: auto;
+    color: var(--white);
+  }
+  .chat-msg.bot .bubble {
+    background: var(--black-3);
+    border: 1px solid rgba(255,255,255,0.06);
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    max-width: 85%;
+    color: var(--white-dim);
+    line-height: 1.6;
+  }
+  .chat-msg .label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.1em;
+    color: var(--white-dim);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+  }
+  .chat-msg.user .label { text-align: right; color: var(--gold); }
+  .chat-input-row { display: flex; gap: 10px; }
+  .chat-input-row input {
+    flex: 1;
+    background: var(--black-2);
+    border: 1px solid var(--border);
+    color: var(--white);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1rem;
+    padding: 12px 16px;
+    outline: none;
+  }
+  .chat-input-row input:focus { border-color: var(--gold); }
+  .btn-send {
+    background: var(--gold);
+    border: none;
+    color: var(--black);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: opacity 0.3s;
+  }
+  .btn-send:hover { opacity: 0.85; }
+
+  /* LOADING */
+  .loading-dots span {
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: var(--gold);
+    border-radius: 50%;
+    margin: 0 2px;
+    animation: bounce 1.2s infinite;
+  }
+  .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce {
+    0%,80%,100% { transform: translateY(0); opacity:0.4; }
+    40% { transform: translateY(-6px); opacity:1; }
+  }
+
+  /* DIVIDER */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 50px 0;
+  }
+
+  /* DOWNLOAD */
+  .btn-download {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--white-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 16px;
+  }
+  .btn-download:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: var(--black-3);
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    padding: 14px 24px;
+    z-index: 9999;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.4s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--black); }
+  ::-webkit-scrollbar-thumb { background: var(--gold); }
+</style>
+</head>
+<body>
+
+<header>
+  <div style="display:flex;align-items:center;gap:14px;">
+    <span class="logo">MODAI</span>
+    <span class="pro-badge">✦ PRO</span>
+  </div>
+  <div class="header-right">
+    <span class="gen-count">∞ GÉNÉRATIONS</span>
+    <button class="btn-logout" onclick="logout()">DÉCONNEXION</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- WELCOME -->
+  <div class="welcome-banner">
+    <div class="icon">✦</div>
+    <div>
+      <h2>Bienvenue dans MODAI Pro</h2>
+      <p>Générations illimitées · Toutes plateformes · Assistant IA prioritaire</p>
+    </div>
+  </div>
+
+  <!-- GENERATOR -->
+  <div class="form-section">
+    <label>Nom du produit</label>
+    <input type="text" id="product-name" placeholder="Ex: Robe fleurie été...">
+  </div>
+
+  <div class="form-section">
+    <label>Description</label>
+    <textarea id="product-desc" placeholder="Couleur, matière, taille, prix, caractéristiques..."></textarea>
+  </div>
+
+  <div class="form-section">
+    <label>Ton de marque</label>
+    <div class="tone-grid">
+      <button class="tone-btn selected" onclick="selectTone(this,'Luxe & élégant')">Luxe & Élégant</button>
+      <button class="tone-btn" onclick="selectTone(this,'Casual & décontracté')">Casual</button>
+      <button class="tone-btn" onclick="selectTone(this,'Streetwear & urban')">Streetwear</button>
+      <button class="tone-btn" onclick="selectTone(this,'Minimaliste & épuré')">Minimaliste</button>
+      <button class="tone-btn" onclick="selectTone(this,'Jeune & tendance')">Tendance</button>
+      <button class="tone-btn" onclick="selectTone(this,'Professionnel & sérieux')">Professionnel</button>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <label>Plateformes (sélection multiple)</label>
+    <div class="platforms-grid">
+      <button class="platform-btn selected" onclick="togglePlatform(this,'description_seo')">
+        <span class="icon">🔍</span>Description SEO
+      </button>
+      <button class="platform-btn" onclick="togglePlatform(this,'instagram')">
+        <span class="icon">📸</span>Instagram
+      </button>
+      <button class="platform-btn" onclick="togglePlatform(this,'facebook')">
+        <span class="icon">📘</span>Facebook
+      </button>
+      <button class="platform-btn" onclick="togglePlatform(this,'tiktok')">
+        <span class="icon">🎵</span>TikTok
+      </button>
+      <button class="platform-btn" onclick="togglePlatform(this,'email')">
+        <span class="icon">📧</span>Email
+      </button>
+      <button class="platform-btn" onclick="togglePlatform(this,'hashtags')">
+        <span class="icon">#</span>Hashtags
+      </button>
+    </div>
+  </div>
+
+  <button class="btn-generate" id="btn-generate" onclick="generateContent()">
+    ✦ GÉNÉRER LE CONTENU
+  </button>
+
+  <div id="results"></div>
+
+  <div id="download-area" style="display:none;">
+    <button class="btn-download" onclick="downloadAll()">⬇ TÉLÉCHARGER TOUT (.txt)</button>
+  </div>
+
+  <hr class="divider">
+
+  <!-- HISTORY -->
+  <div id="history-section">
+    <div class="section-title">✦ Historique</div>
+    <div id="history-list"></div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- CHAT -->
+  <div id="chat-section">
+    <div class="section-title">✦ Assistant IA Mode</div>
+    <div class="chat-box" id="chat-box">
+      <div class="chat-msg bot">
+        <div class="label">MODAI PRO</div>
+        <div class="bubble">Bonjour ! Je suis votre assistant IA mode Pro. Posez-moi n'importe quelle question sur votre boutique, vos collections, votre stratégie marketing — je suis là pour vous aider. ✦</div>
+      </div>
+    </div>
+    <div class="chat-input-row">
+      <input type="text" id="chat-input" placeholder="Votre question..." onkeydown="if(event.key==='Enter')sendChat()">
+      <button class="btn-send" onclick="sendChat()">ENVOYER</button>
+    </div>
+  </div>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// --- AUTH CHECK ---
+const PRO_KEY = localStorage.getItem('modai_pro_key');
+if (!PRO_KEY) {
+  window.location.href = '/';
+}
+
+// --- STATE ---
+let selectedPlatforms = ['description_seo'];
+let selectedTone = 'Luxe & élégant';
+let lastResults = {};
+let history = JSON.parse(localStorage.getItem('modai_pro_history') || '[]');
+let chatHistory = [];
+
+// --- TONE ---
+function selectTone(btn, tone) {
+  document.querySelectorAll('.tone-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedTone = tone;
+}
+
+// --- PLATFORMS ---
+function togglePlatform(btn, platform) {
+  btn.classList.toggle('selected');
+  if (btn.classList.contains('selected')) {
+    if (!selectedPlatforms.includes(platform)) selectedPlatforms.push(platform);
+  } else {
+    selectedPlatforms = selectedPlatforms.filter(p => p !== platform);
+  }
+}
+
+// --- GENERATE ---
+async function generateContent() {
+  const name = document.getElementById('product-name').value.trim();
+  const desc = document.getElementById('product-desc').value.trim();
+
+  if (!name) { showToast('Entrez le nom du produit'); return; }
+  if (selectedPlatforms.length === 0) { showToast('Sélectionnez au moins une plateforme'); return; }
+
+  const btn = document.getElementById('btn-generate');
+  btn.disabled = true;
+  btn.textContent = '✦ GÉNÉRATION EN COURS...';
+  document.getElementById('results').innerHTML = '';
+  document.getElementById('download-area').style.display = 'none';
+  lastResults = {};
+
+  const platformLabels = {
+    description_seo: 'Description SEO',
+    instagram: 'Instagram',
+    facebook: 'Facebook',
+    tiktok: 'TikTok',
+    email: 'Email Marketing',
+    hashtags: 'Hashtags'
+  };
+
+  for (const platform of selectedPlatforms) {
+    const prompt = buildPrompt(name, desc, platform, selectedTone);
+    const resultsDiv = document.getElementById('results');
+
+    const block = document.createElement('div');
+    block.className = 'result-block';
+    block.innerHTML = `
+      <div class="result-header">
+        <span class="result-platform">✦ ${platformLabels[platform]}</span>
+        <div class="loading-dots"><span></span><span></span><span></span></div>
+      </div>
+      <div class="result-content" id="content-${platform}">Génération...</div>
+    `;
+    resultsDiv.appendChild(block);
+
+    try {
+      const res = await fetch('/api/generer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt })
+      });
+      const data = await res.json();
+      const content = data.contenu || data.erreur || 'Erreur';
+      lastResults[platform] = content;
+
+      block.querySelector('.result-header').innerHTML = `
+        <span class="result-platform">✦ ${platformLabels[platform]}</span>
+        <button class="btn-copy" onclick="copyResult(this, '${platform}')">COPIER</button>
+      `;
+      block.querySelector(`#content-${platform}`).textContent = content;
+    } catch(e) {
+      block.querySelector(`#content-${platform}`).textContent = 'Erreur de connexion';
+    }
+  }
+
+  btn.disabled = false;
+  btn.textContent = '✦ GÉNÉRER LE CONTENU';
+  document.getElementById('download-area').style.display = 'block';
+
+  // Save to history
+  const entry = {
+    name,
+    desc,
+    tone: selectedTone,
+    platforms: [...selectedPlatforms],
+    results: {...lastResults},
+    date: new Date().toLocaleString('fr-FR')
+  };
+  history.unshift(entry);
+  if (history.length > 20) history = history.slice(0, 20);
+  localStorage.setItem('modai_pro_history', JSON.stringify(history));
+  renderHistory();
+}
+
+function buildPrompt(name, desc, platform, tone) {
+  const prompts = {
+    description_seo: `Crée une description produit SEO professionnelle pour "${name}". Détails: ${desc || 'non spécifiés'}. Ton: ${tone}. 150-200 mots, optimisée pour le référencement, avec mots-clés naturels.`,
+    instagram: `Crée un post Instagram engageant pour "${name}". Détails: ${desc || 'non spécifiés'}. Ton: ${tone}. Avec emojis, call-to-action fort, style ${tone}.`,
+    facebook: `Crée un post Facebook pour "${name}". Détails: ${desc || 'non spécifiés'}. Ton: ${tone}. Plus long qu'Instagram, conversationnel, avec question pour engager la communauté.`,
+    tiktok: `Crée une caption TikTok virale pour "${name}". Détails: ${desc || 'non spécifiés'}. Ton: ${tone}. Court, punchy, avec trending sounds suggestion et hashtags TikTok.`,
+    email: `Crée un email marketing pour "${name}". Détails: ${desc || 'non spécifiés'}. Ton: ${tone}. Avec objet accrocheur, corps engageant, CTA fort. Format: Objet: / Corps: / CTA:`,
+    hashtags: `Génère 25 hashtags optimisés pour "${name}" mode e-commerce. Détails: ${desc || 'non spécifiés'}. Mix: populaires + niche + tendance. Organisés par catégorie.`
+  };
+  return prompts[platform] || '';
+}
+
+// --- COPY ---
+function copyResult(btn, platform) {
+  const content = lastResults[platform] || '';
+  navigator.clipboard.writeText(content).then(() => {
+    btn.textContent = '✓ COPIÉ';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'COPIER'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// --- DOWNLOAD ---
+function downloadAll() {
+  let text = `MODAI PRO — Générations\n${'='.repeat(50)}\n\n`;
+  for (const [platform, content] of Object.entries(lastResults)) {
+    text += `[${platform.toUpperCase()}]\n${content}\n\n${'—'.repeat(40)}\n\n`;
+  }
+  const blob = new Blob([text], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `modai_pro_${Date.now()}.txt`;
+  a.click();
+}
+
+// --- HISTORY ---
+function renderHistory() {
+  const list = document.getElementById('history-list');
+  if (!history.length) {
+    list.innerHTML = '<p style="color:var(--white-dim);font-size:0.85rem;">Aucune génération pour l\'instant.</p>';
+    return;
+  }
+  list.innerHTML = history.map((h, i) => `
+    <div class="history-item" onclick="loadHistory(${i})">
+      <span class="history-item-name">${h.name}</span>
+      <span class="history-item-meta">${h.platforms.length} plateforme(s) · ${h.date}</span>
+    </div>
+  `).join('');
+}
+
+function loadHistory(i) {
+  const h = history[i];
+  document.getElementById('product-name').value = h.name;
+  document.getElementById('product-desc').value = h.desc || '';
+  selectedPlatforms = [...h.platforms];
+  lastResults = {...h.results};
+
+  document.querySelectorAll('.platform-btn').forEach(btn => {
+    const p = btn.getAttribute('onclick').match(/'([^']+)'\)$/)[1];
+    btn.classList.toggle('selected', selectedPlatforms.includes(p));
+  });
+
+  const platformLabels = {
+    description_seo: 'Description SEO', instagram: 'Instagram',
+    facebook: 'Facebook', tiktok: 'TikTok', email: 'Email Marketing', hashtags: 'Hashtags'
+  };
+  const resultsDiv = document.getElementById('results');
+  resultsDiv.innerHTML = Object.entries(h.results).map(([p, content]) => `
+    <div class="result-block">
+      <div class="result-header">
+        <span class="result-platform">✦ ${platformLabels[p] || p}</span>
+        <button class="btn-copy" onclick="copyText(this, \`${content.replace(/`/g,'\\`')}\`)">COPIER</button>
+      </div>
+      <div class="result-content">${content}</div>
+    </div>
+  `).join('');
+  document.getElementById('download-area').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  showToast('Historique chargé');
+}
+
+function copyText(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ COPIÉ';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'COPIER'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// --- CHAT ---
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+
+  const box = document.getElementById('chat-box');
+  box.innerHTML += `<div class="chat-msg user"><div class="label">VOUS</div><div class="bubble">${msg}</div></div>`;
+
+  const loadingId = 'loading-' + Date.now();
+  box.innerHTML += `<div class="chat-msg bot" id="${loadingId}"><div class="label">MODAI PRO</div><div class="bubble"><div class="loading-dots"><span></span><span></span><span></span></div></div></div>`;
+  box.scrollTop = box.scrollHeight;
+
+  chatHistory.push({ role: 'user', content: msg });
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg })
+    });
+    const data = await res.json();
+    const reply = data.reponse || 'Erreur';
+    chatHistory.push({ role: 'assistant', content: reply });
+
+    document.getElementById(loadingId).innerHTML = `
+      <div class="label">MODAI PRO</div>
+      <div class="bubble">${reply}</div>
+    `;
+  } catch(e) {
+    document.getElementById(loadingId).querySelector('.bubble').textContent = 'Erreur de connexion';
+  }
+  box.scrollTop = box.scrollHeight;
+}
+
+// --- LOGOUT ---
+function logout() {
+  localStorage.removeItem('modai_pro_key');
+  window.location.href = '/';
+}
+
+// --- TOAST ---
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// --- INIT ---
+renderHistory();
+</script>
+</body>
+</html>
