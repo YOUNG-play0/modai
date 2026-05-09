@@ -73,6 +73,23 @@ def chat():
 @app.route('/webhook/gumroad', methods=['POST'])
 def gumroad_webhook():
     return jsonify({'success': True}), 200
+    ## ROUTES À AJOUTER DANS app.py ##
+## Colle ces routes dans ton app.py existant, AVANT le if __name__ == '__main__' ##
+
+# Clé Pro — change cette valeur quand tu veux
+PRO_KEY = "MODAI-PRO-2024"
+
+@app.route('/pro')
+def pro_page():
+    return send_from_directory('.', 'pro.html')
+
+@app.route('/api/verify-key', methods=['POST'])
+def verify_key():
+    data = request.get_json()
+    key = data.get('key', '').strip().upper()
+    if key == PRO_KEY:
+        return jsonify({'valid': True})
+    return jsonify({'valid': False}), 401
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
